@@ -1,0 +1,370 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////
+// ENUMS
+//////////////////////
+
+enum RequestStatus {
+  draft
+  submitted
+  matching
+  proposing
+  waiting_customer
+  approved
+  rejected
+  booked
+  deployed
+}
+
+enum SelectionMode {
+  auto
+  manual
+}
+
+enum MatchStatus {
+  proposed
+  approved
+  rejected
+}
+
+enum AssignmentStatus {
+  planned
+  active
+  completed
+}
+
+enum CheckStatus {
+  pending
+  passed
+  failed
+}
+
+//////////////////////
+// USER & RBAC
+//////////////////////
+
+model User {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
+
+  roleId String
+  role   Role @relation(fields: [roleId], references: [id])
+
+  requests  ManpowerRequest[] @relation("UserRequests")
+  logs      WorkflowLog[]
+  decisions CustomerDecision[]
+
+  createdAt DateTime @default(now())
+}
+
+model Role {
+  id   String @id @default(uuid())
+  name String @unique
+
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id       String @id @default(uuid())
+  resource String
+  action   String
+
+  roles RolePermission[]
+
+  @@unique([resource, action])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+//////////////////////
+// COMPANY
+//////////////////////
+
+model Company {
+  id   String @id @default(uuid())
+  name String
+  type String
+
+  employees Employee[]
+}
+
+//////////////////////
+// EMPLOYEE
+//////////////////////
+
+model Employee {
+  id       String @id @default(uuid())
+  empCode  String @unique
+  fullName String
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  skills       EmployeeSkill[]
+  trainings    EmployeeTraining[]
+  certificates Certificate[]
+  healthCerts  HealthCertificate[]
+
+  candidates  Candidate[]
+  assignments Assignment[]
+  bookings    Booking[]
+
+  safetyChecks  SafetyCheck[]
+  medicalChecks MedicalCheck[]
+
+  createdAt DateTime @default(now())
+}
+
+//////////////////////
+// SAFETY / MEDICAL (เพิ่ม)
+//////////////////////
+
+model SafetyCheck {
+  id         String @id @default(uuid())
+  employeeId String
+  status     CheckStatus @default(pending)
+
+  createdAt DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+}
+
+model MedicalCheck {
+  id         String @id @default(uuid())
+  employeeId String
+  status     CheckStatus @default(pending)
+
+  createdAt DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+}
+
+//////////////////////
+// SKILL
+//////////////////////
+
+model Skill {
+  id   String @id @default(uuid())
+  name String
+
+  employees EmployeeSkill[]
+}
+
+model EmployeeSkill {
+  id         String @id @default(uuid())
+  employeeId String
+  skillId    String
+  level      Int
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+  skill    Skill    @relation(fields: [skillId], references: [id])
+}
+
+//////////////////////
+// TRAINING (ปรับ)
+//////////////////////
+
+model Training {
+  id   String @id @default(uuid())
+  name String
+
+  employees EmployeeTraining[]
+}
+
+model EmployeeTraining {
+  id         String @id @default(uuid())
+  employeeId String
+  trainingId String
+
+  status String
+  expiryDate DateTime? // เพิ่ม
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+  training Training @relation(fields: [trainingId], references: [id])
+}
+
+//////////////////////
+// CERTIFICATE
+//////////////////////
+
+model Certificate {
+  id         String @id @default(uuid())
+  employeeId String
+  name       String
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+}
+
+model HealthCertificate {
+  id         String @id @default(uuid())
+  employeeId String
+
+  type String
+  issueDate  DateTime
+  expiryDate DateTime
+  status     String
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+//////////////////////
+// PROJECT
+//////////////////////
+
+model Project {
+  id   String @id @default(uuid())
+  name String
+
+  requests    ManpowerRequest[]
+  assignments Assignment[]
+}
+
+//////////////////////
+// REQUEST (เพิ่ม field MMS)
+//////////////////////
+
+model ManpowerRequest {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  servicePosition String
+  quantity        Int
+
+  startDate DateTime?
+  endDate   DateTime?
+  isOffshore Boolean @default(false)
+
+  selectionMode SelectionMode @default(manual)
+  status        RequestStatus @default(draft)
+
+  requestedById String
+  requestedBy   User @relation("UserRequests", fields: [requestedById], references: [id])
+
+  rounds CandidateRound[]
+  bookings Booking[]
+
+  createdAt DateTime @default(now())
+  CustomerDecision CustomerDecision[]
+}
+
+//////////////////////
+// ROUND SYSTEM
+//////////////////////
+
+model CandidateRound {
+  id        String @id @default(uuid())
+  requestId String
+  round     Int
+
+  request    ManpowerRequest @relation(fields: [requestId], references: [id])
+  candidates Candidate[]
+
+  createdAt DateTime @default(now())
+}
+
+model Candidate {
+  id         String @id @default(uuid())
+  roundId    String
+  employeeId String
+
+  sourceType String
+  totalScore Int
+  status     MatchStatus @default(proposed)
+
+  round    CandidateRound @relation(fields: [roundId], references: [id])
+  employee Employee       @relation(fields: [employeeId], references: [id])
+
+  decision CustomerDecision?
+}
+
+//////////////////////
+// CUSTOMER DECISION
+//////////////////////
+
+model CustomerDecision {
+  id          String  @id @default(uuid())
+  candidateId String  @unique
+  requestId   String
+  decidedById String?
+
+  status  String
+  comment String?
+
+  candidate Candidate       @relation(fields: [candidateId], references: [id])
+  request   ManpowerRequest @relation(fields: [requestId], references: [id])
+  user      User?           @relation(fields: [decidedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+//////////////////////
+// BOOKING → ASSIGNMENT
+//////////////////////
+
+model Booking {
+  id         String @id @default(uuid())
+  requestId  String
+  employeeId String
+
+  status String // pending / approved / deployed
+  approvedBy String?
+
+  request  ManpowerRequest @relation(fields: [requestId], references: [id])
+  employee Employee        @relation(fields: [employeeId], references: [id])
+
+  assignment Assignment?
+
+  createdAt DateTime @default(now())
+}
+
+model Assignment {
+  id         String @id @default(uuid())
+  bookingId  String @unique
+  employeeId String
+  projectId  String
+
+  status AssignmentStatus
+
+  booking  Booking  @relation(fields: [bookingId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+  project  Project  @relation(fields: [projectId], references: [id])
+}
+
+//////////////////////
+// WORKFLOW LOG
+//////////////////////
+
+model WorkflowLog {
+  id        String  @id @default(uuid())
+  requestId String
+  userId    String?
+
+  action  String
+  comment String?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
