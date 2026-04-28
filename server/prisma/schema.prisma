@@ -59,11 +59,17 @@ model User {
   roleId String
   role   Role @relation(fields: [roleId], references: [id])
 
+  employeeId String? @unique
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
   requests  ManpowerRequest[] @relation("UserRequests")
   logs      WorkflowLog[]
   decisions CustomerDecision[]
 
   createdAt DateTime @default(now())
+
+  resetOtp           String?
+  resetOtpExpireAt   DateTime?
 }
 
 model Role {
@@ -71,6 +77,7 @@ model Role {
   name String @unique
 
   users       User[]
+
   permissions RolePermission[]
 }
 
@@ -78,6 +85,7 @@ model Permission {
   id       String @id @default(uuid())
   resource String
   action   String
+  description String?
 
   roles RolePermission[]
 
@@ -115,8 +123,14 @@ model Employee {
   empCode  String @unique
   fullName String
 
+  status String @default("active")
+  servicePosition String?
+  isOffshore Boolean @default(false)
+
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
+
+  user User?
 
   skills       EmployeeSkill[]
   trainings    EmployeeTraining[]

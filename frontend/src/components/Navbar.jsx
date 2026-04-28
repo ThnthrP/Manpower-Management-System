@@ -19,7 +19,8 @@ const Navbar = () => {
 
       if (data.success) {
         setIsLoggedin(false);
-        setUserData(false);
+        // setUserData(false);
+        setUserData(null);
         navigate("/");
       }
     } catch (error) {

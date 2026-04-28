@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 // import { assets } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 import { AppContent } from "../context/AppContext";
@@ -30,6 +30,8 @@ const Login = () => {
       setLoading(true);
       axios.defaults.withCredentials = true;
 
+      const company = localStorage.getItem("company");
+
       let data;
 
       if (state === "Sign Up") {
@@ -41,16 +43,27 @@ const Login = () => {
         data = res.data;
 
         if (data.success) {
+          // const loginRes = await axios.post(backendUrl + "/api/auth/login", {
+          //   email,
+          //   password,
+          // });
           const loginRes = await axios.post(backendUrl + "/api/auth/login", {
             email,
             password,
+            company,
           });
           data = loginRes.data;
         }
       } else {
+        // const res = await axios.post(backendUrl + "/api/auth/login", {
+        //   email,
+        //   password,
+        // });
+
         const res = await axios.post(backendUrl + "/api/auth/login", {
           email,
           password,
+          company,
         });
         data = res.data;
       }
@@ -79,6 +92,22 @@ const Login = () => {
     }
   };
 
+  useEffect(() => {
+    const company = localStorage.getItem("company");
+
+    if (!company) {
+      navigate("/");
+    }
+  }, []);
+
+  // useEffect(() => {
+  //   const company = localStorage.getItem("company");
+
+  //   if (company) {
+  //     console.log("Selected company:", company);
+  //   }
+  // }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       {/* CARD */}
@@ -87,7 +116,7 @@ const Login = () => {
         <div className="flex flex-col items-center mb-6">
           <img src={logo} alt="logo" className="w-14 mb-2" />
           <h1 className="text-xl font-semibold text-gray-800">
-            Transportation Management
+            Manpower Management
           </h1>
           <p className="text-sm text-gray-500">System</p>
         </div>
@@ -147,7 +176,11 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-md font-medium hover:bg-blue-700 transition disabled:opacity-50 flex justify-center items-center gap-2"
+            className="w-full bg-blue-600 text-white py-2 rounded-md font-medium
+                        transition hover:bg-blue-700 cursor-pointer
+                        disabled:opacity-50
+                        disabled:cursor-not-allowed
+                        flex justify-center items-center gap-2"
           >
             {loading && <span className="animate-spin">⏳</span>}
             {loading

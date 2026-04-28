@@ -5,9 +5,9 @@ const userAuth = async (req, res, next) => {
   const { token } = req.cookies;
 
   if (!token) {
-    return res.json({
+    return res.status(401).json({
       success: false,
-      message: "Not Authorized. Login Again",
+      message: "Not Authorized",
     });
   }
 
@@ -15,13 +15,12 @@ const userAuth = async (req, res, next) => {
     const tokenDecode = jwt.verify(token, process.env.JWT_SECRET);
 
     if (!tokenDecode.userId) {
-      return res.json({
+      return res.status(401).json({
         success: false,
-        message: "Not Authorized. Login Again",
+        message: "Invalid token",
       });
     }
 
-    // 🔥 โหลด user + role + permission
     const user = await prisma.user.findUnique({
       where: { id: tokenDecode.userId },
       include: {
@@ -38,23 +37,26 @@ const userAuth = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.json({
+      return res.status(401).json({
         success: false,
         message: "User not found",
       });
     }
 
-    // 🔥 เก็บ user ทั้งก้อน
+    // inject user
     req.user = user;
-
-    // (optional) เผื่อใช้
     req.userId = user.id;
+
+    // inject permissions (สำคัญ)
+    req.permissions = user.role.permissions.map(
+      (p) => `${p.permission.resource}:${p.permission.action}`,
+    );
 
     next();
   } catch (error) {
-    return res.json({
+    return res.status(401).json({
       success: false,
-      message: error.message,
+      message: "Invalid or expired token",
     });
   }
 };

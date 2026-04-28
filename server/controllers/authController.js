@@ -27,8 +27,12 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // หา role "user"
+    // const userRole = await prisma.role.findUnique({
+    //   where: { name: "user" },
+    // });
+
     const userRole = await prisma.role.findUnique({
-      where: { name: "user" },
+      where: { name: "pe" },
     });
 
     if (!userRole) {
@@ -42,6 +46,9 @@ export const register = async (req, res) => {
         password: hashedPassword,
         roleId: userRole.id,
       },
+      include: {
+        role: true,
+      },
     });
 
     const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
@@ -50,8 +57,10 @@ export const register = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      // secure: false,
+      // sameSite: "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      secure: process.env.NODE_ENV === "production",
     });
 
     return res.json({
@@ -104,8 +113,10 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
+      // secure: process.env.NODE_ENV === "production",
+      // sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -116,7 +127,11 @@ export const login = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        // role: user.role,
+        role: user.role.name,
+        permissions: user.role.permissions.map(
+          (p) => `${p.permission.resource}:${p.permission.action}`,
+        ),
       },
     });
   } catch (error) {

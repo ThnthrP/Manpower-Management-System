@@ -14,6 +14,7 @@ import AdminRoute from "./components/AdminRoute";
 import AdminBookings from "./pages/AdminBookings";
 import AdminProfile from "./pages/AdminProfile";
 import AdminCost from "./pages/AdminCost";
+import CompanySelect from "./pages/CompanySelect";
 
 const App = () => {
   const { isLoggedin } = useContext(AppContent);
@@ -25,9 +26,23 @@ const App = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         {/* หน้าแรก */}
-        <Route
+        {/* <Route
           path="/"
           element={isLoggedin ? <Navigate to="/dashboard" /> : <Login />}
+        /> */}
+
+        <Route
+          path="/"
+          element={
+            isLoggedin ? <Navigate to="/dashboard" /> : <CompanySelect />
+          }
+        />
+
+        <Route
+          path="/login"
+          element={
+            localStorage.getItem("company") ? <Login /> : <Navigate to="/" />
+          }
         />
 
         {/* Dashboard */}

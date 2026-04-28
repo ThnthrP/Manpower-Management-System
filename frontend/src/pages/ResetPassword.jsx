@@ -1,88 +1,95 @@
-import React, { useContext, useState } from "react";
-import { assets } from "../assets/assets";
+import React, { useContext, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { AppContent } from "../context/AppContext";
 import { toast } from "react-toastify";
+import logo from "../assets/experteam_logo.png";
 
 const ResetPassword = () => {
   const { backendUrl } = useContext(AppContent);
   axios.defaults.withCredentials = true;
 
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isEmailSent, setIsEmailSent] = useState(false);
-  const [otp, setOtp] = useState(0);
+  const [otp, setOtp] = useState("");
   const [isOtpSubmited, setIsOtpSubmited] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const inputRefs = React.useRef([]);
+  const inputRefs = useRef([]);
 
   const handleInput = (e, index) => {
-    if (e.target.value.length > 0 && index < inputRefs.current.length - 1) {
+    if (e.target.value.length > 0 && index < 5) {
       inputRefs.current[index + 1].focus();
     }
   };
 
   const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace" && e.target.value === "" && index > 0) {
+    if (e.key === "Backspace" && !e.target.value && index > 0) {
       inputRefs.current[index - 1].focus();
     }
   };
 
   const handlePaste = (e) => {
-    const paste = e.clipboardData.getData("text");
-    const pasteArray = paste.split("");
-    pasteArray.forEach((char, index) => {
-      if (inputRefs.current[index]) {
-        inputRefs.current[index].value = char;
+    const paste = e.clipboardData.getData("text").slice(0, 6);
+    paste.split("").forEach((char, i) => {
+      if (inputRefs.current[i]) {
+        inputRefs.current[i].value = char;
       }
     });
   };
 
+  // STEP 1: ส่ง email
   const onSubmitEmail = async (e) => {
     e.preventDefault();
-    try {
-      setLoading(true); // 🔥 ตรงนี้
 
-      if (!email.includes("@")) {
-        return toast.error("Invalid email");
-      }
+    if (!email.includes("@")) {
+      return toast.error("รูปแบบอีเมลไม่ถูกต้อง");
+    }
+
+    try {
+      setLoading(true);
 
       const { data } = await axios.post(
         backendUrl + "/api/auth/send-reset-otp",
         { email },
       );
 
-      data.success ? toast.success(data.message) : toast.error(data.message);
-      data.success && setIsEmailSent(true);
-    } catch (error) {
-      toast.error(error.message);
+      if (data.success) {
+        toast.success(data.message);
+        setIsEmailSent(true);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (err) {
+      toast.error(err.message);
     } finally {
-      setLoading(false); // 🔥 ตรงนี้
+      setLoading(false);
     }
   };
 
-  const onSubmitOTP = async (e) => {
+  // STEP 2: OTP
+  const onSubmitOTP = (e) => {
     e.preventDefault();
 
-    const otpArray = inputRefs.current.map((e) => e.value);
-    const finalOtp = otpArray.join("");
+    const finalOtp = inputRefs.current.map((i) => i.value).join("");
 
-    // 🔥 check OTP
     if (finalOtp.length !== 6) {
-      return toast.error("Please enter complete OTP");
+      return toast.error("กรุณากรอก OTP ให้ครบ");
     }
 
-    setOtp(finalOtp); // ✅ ใช้อันเดียวพอ
+    setOtp(finalOtp);
     setIsOtpSubmited(true);
   };
 
+  // STEP 3: password ใหม่
   const onSubmitNewPassword = async (e) => {
     e.preventDefault();
+
     try {
-      setLoading(true); // 🔥
+      setLoading(true);
 
       const { data } = await axios.post(
         backendUrl + "/api/auth/reset-password",
@@ -99,124 +106,127 @@ const ResetPassword = () => {
       } else {
         toast.error(data.message);
       }
-    } catch (error) {
-      toast.error(error.message);
+    } catch (err) {
+      toast.error(err.message);
     } finally {
-      setLoading(false); // 🔥
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-200 to-purple-400">
-      <img
-        onClick={() => navigate("/")}
-        src={assets.logo}
-        alt=""
-        className="absolute left-5 sm:left-20 top-5 w-28 sm:w-32 cursor-pointer"
-      />
-      {/* enter email id */}
-
-      {!isEmailSent && (
-        <form
-          onSubmit={onSubmitEmail}
-          className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm"
-        >
-          <h1 className="text-white text-2xl font-semibold text-center mb-4">
-            Reset password
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      {/* CARD */}
+      <div className="w-full max-w-md bg-white shadow-xl rounded-xl p-8">
+        {/* LOGO */}
+        <div className="flex flex-col items-center mb-6">
+          <img src={logo} className="w-14 mb-2" />
+          <h1 className="text-xl font-semibold text-gray-800">
+            Manpower Management
           </h1>
-          <p className="text-center mb-6 text-indigo-300">
-            Enter your registered email address
-          </p>
-          <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-            <img src={assets.mail_icon} alt="" className="w-3 h-3" />
-            <input
-              type="email"
-              placeholder="Email id"
-              className="bg-transparent outline-none text-white"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <button
-            disabled={loading}
-            className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-900 text-white rounded-full mt-3 cursor-pointer disabled:opacity-50"
-          >
-            {loading ? "Loading..." : "Submit"}
-          </button>
-        </form>
-      )}
-      {/* <h1>Reset Password</h1> */}
-      {/* otp input form */}
+          <p className="text-sm text-gray-500">System</p>
+        </div>
 
-      {!isOtpSubmited && isEmailSent && (
-        <form
-          onSubmit={onSubmitOTP}
-          className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm"
-        >
-          <h1 className="text-white text-2xl font-semibold text-center mb-4">
-            Reset password OTP
-          </h1>
-          <p className="text-center mb-6 text-indigo-300">
-            Enter the 6-digit code sent to your email id.
-          </p>
-          <div className="flex justify-between mb-8" onPaste={handlePaste}>
-            {Array(6)
-              .fill(0)
-              .map((_, index) => (
-                <input
-                  type="text"
-                  maxLength="1"
-                  key={index}
-                  required
-                  className="w-12 h-12 bg-[#333A5C] text-white text-center 
-            text-xl rounded-md"
-                  ref={(e) => (inputRefs.current[index] = e)}
-                  onInput={(e) => handleInput(e, index)}
-                  onKeyDown={(e) => handleKeyDown(e, index)}
-                />
-              ))}
-          </div>
-          <button
-            disabled={loading}
-            className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-900 text-white rounded-full cursor-pointer disabled:opacity-50"
-          >
-            {loading ? "Loading..." : "Submit"}
-          </button>
-        </form>
-      )}
+        {/* STEP 1 */}
+        {!isEmailSent && (
+          <>
+            <h2 className="text-2xl font-bold text-center text-gray-800 mb-2">
+              รีเซ็ตรหัสผ่าน
+            </h2>
+            <p className="text-center text-sm text-gray-500 mb-6">
+              กรุณากรอกอีเมลของคุณ
+            </p>
 
-      {/* enter new password */}
-      {isOtpSubmited && isEmailSent && (
-        <form
-          onSubmit={onSubmitNewPassword}
-          className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm"
+            <form onSubmit={onSubmitEmail} className="space-y-4">
+              <input
+                type="email"
+                placeholder="อีเมล"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                required
+              />
+
+              <button
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? "กำลังส่ง..." : "ส่ง OTP"}
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* STEP 2 OTP */}
+        {isEmailSent && !isOtpSubmited && (
+          <>
+            <h2 className="text-2xl font-bold text-center mb-2">กรอก OTP</h2>
+            <p className="text-center text-sm text-gray-500 mb-6">
+              รหัส 6 หลักถูกส่งไปยังอีเมลของคุณ
+            </p>
+
+            <form onSubmit={onSubmitOTP}>
+              <div className="flex justify-between mb-6" onPaste={handlePaste}>
+                {Array(6)
+                  .fill(0)
+                  .map((_, i) => (
+                    <input
+                      key={i}
+                      type="text"
+                      maxLength="1"
+                      ref={(el) => (inputRefs.current[i] = el)}
+                      onInput={(e) => handleInput(e, i)}
+                      onKeyDown={(e) => handleKeyDown(e, i)}
+                      className="w-12 h-12 border border-gray-300 rounded-md text-center text-lg"
+                      required
+                    />
+                  ))}
+              </div>
+
+              <button className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+                ยืนยัน OTP
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* STEP 3 */}
+        {isOtpSubmited && (
+          <>
+            <h2 className="text-2xl font-bold text-center mb-2">
+              ตั้งรหัสผ่านใหม่
+            </h2>
+            <p className="text-center text-sm text-gray-500 mb-6">
+              กรุณากรอกรหัสผ่านใหม่
+            </p>
+
+            <form onSubmit={onSubmitNewPassword} className="space-y-4">
+              <input
+                type="password"
+                placeholder="รหัสผ่านใหม่"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full border border-gray-300 rounded-md px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                required
+              />
+
+              <button
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {loading ? "กำลังบันทึก..." : "ยืนยัน"}
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* BACK */}
+        <p
+          onClick={() => navigate("/login")}
+          className="text-center text-sm text-blue-600 mt-6 cursor-pointer hover:underline"
         >
-          <h1 className="text-white text-2xl font-semibold text-center mb-4">
-            New password
-          </h1>
-          <p className="text-center mb-6 text-indigo-300">
-            Enter the new password below
-          </p>
-          <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
-            <img src={assets.lock_icon} alt="" className="w-3 h-3" />
-            <input
-              type="password"
-              placeholder="Password"
-              className="bg-transparent outline-none text-white"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button
-            disabled={loading}
-            className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-900 text-white rounded-full mt-3 cursor-pointer disabled:opacity-50"
-          >
-            {loading ? "Loading..." : "Submit"}
-          </button>
-        </form>
-      )}
+          กลับไปเข้าสู่ระบบ
+        </p>
+      </div>
     </div>
   );
 };
