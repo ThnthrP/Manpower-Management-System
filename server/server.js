@@ -15,13 +15,25 @@ import requestRouter from "./routes/requestRoutes.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
+const allowedOrigins = [process.env.CLIENT_URL?.trim(), "http://localhost:5173"]
+  .filter(Boolean);
 
-const allowedOrigins = [process.env.CLIENT_URL];
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+};
 
 // middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 // routes
 app.get("/", (req, res) => res.send("API Working"));
