@@ -13,7 +13,7 @@ const AdminRoute = ({ children }) => {
   }
 
   // ไม่ใช่ admin
-  if (userData.role !== "admin") {
+  if (userData.role?.name !== "admin") {
     return <Navigate to="/dashboard" />;
   }
 

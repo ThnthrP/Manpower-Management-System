@@ -77,9 +77,23 @@ const Login = () => {
           return toast.error("Cannot fetch user data");
         }
 
-        const isAdmin = user.role === "admin";
+        // const isAdmin = user.role === "admin";
+        // const isAdmin = user.role?.name === "admin";
 
-        navigate(isAdmin ? "/admin" : "/dashboard");
+        // const role = user.role?.name;
+        const role = user.role;
+
+        if (role === "admin") {
+          navigate("/admin");
+        } else if (role === "pe") {
+          navigate("/profile"); // หรือ /pe ในอนาคต
+        } else if (role === "mp") {
+          navigate("/profile"); // หรือ /mp
+        } else {
+          navigate("/profile");
+        }
+
+        // navigate(isAdmin ? "/admin" : "/dashboard");
       } else {
         toast.error(data.message);
       }

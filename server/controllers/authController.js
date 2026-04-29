@@ -55,13 +55,26 @@ export const register = async (req, res) => {
       expiresIn: "7d",
     });
 
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   // secure: false,
+    //   // sameSite: "lax",
+    //   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    //   secure: process.env.NODE_ENV === "production",
+    // });
+
     res.cookie("token", token, {
       httpOnly: true,
-      // secure: false,
-      // sameSite: "lax",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax", // 🔥 เปลี่ยนตรงนี้
+      secure: false, // 🔥 dev ต้อง false
     });
+
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   sameSite: "lax", // ✅ FIX
+    //   secure: false, // ✅ dev
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
 
     return res.json({
       success: true,
@@ -111,12 +124,26 @@ export const login = async (req, res) => {
       expiresIn: "7d",
     });
 
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   // secure: process.env.NODE_ENV === "production",
+    //   // sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+    //   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    //   secure: process.env.NODE_ENV === "production",
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
+
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   sameSite: "none", // 🔥 FIX ตัวจริง
+    //   secure: false, // dev ต้อง false
+    //   maxAge: 7 * 24 * 60 * 60 * 1000,
+    // });
+
     res.cookie("token", token, {
       httpOnly: true,
-      // secure: process.env.NODE_ENV === "production",
-      // sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax", // ✅ FIX
+      secure: false, // ✅ dev
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 

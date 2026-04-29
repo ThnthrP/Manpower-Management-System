@@ -1,43 +1,59 @@
-import { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
+import { ToastContainer } from "react-toastify";
+
 import Login from "./pages/Login";
 import ResetPassword from "./pages/ResetPassword";
-import { ToastContainer } from "react-toastify";
-import Booking from "./pages/Booking";
-import AdminDashboard from "./pages/AdminDashboard";
-import MyBookings from "./pages/MyBookings";
 import Profile from "./pages/Profile";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { AppContent } from "./context/AppContext";
-import AdminRoute from "./components/AdminRoute";
-import AdminBookings from "./pages/AdminBookings";
-import AdminProfile from "./pages/AdminProfile";
-import AdminCost from "./pages/AdminCost";
 import CompanySelect from "./pages/CompanySelect";
 
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/layout/Layout";
+
+import { AppContent } from "./context/AppContext";
+
 const App = () => {
-  const { isLoggedin } = useContext(AppContent);
+  const { isLoggedin, loading, userData } = useContext(AppContent);
+
+  useEffect(() => {
+    console.log("userData:", userData);
+    console.log("isLoggedin:", isLoggedin);
+    console.log("role:", userData?.role);
+    console.log("loading:", loading);
+  }, [userData, isLoggedin, loading]);
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div>
       <ToastContainer />
 
       <Routes>
-        <Route path="/login" element={<Login />} />
-        {/* หน้าแรก */}
+        {/* 🔹 Step 1: เลือกบริษัท */}
+        {/* <Route path="/" element={<CompanySelect />} /> */}
         {/* <Route
           path="/"
-          element={isLoggedin ? <Navigate to="/dashboard" /> : <Login />}
+          element={isLoggedin ? <Navigate to="/admin" /> : <CompanySelect />}
         /> */}
-
         <Route
           path="/"
           element={
-            isLoggedin ? <Navigate to="/dashboard" /> : <CompanySelect />
+            isLoggedin ? (
+              userData?.role === "admin" ? (
+                <Navigate to="/admin" />
+              ) : (
+                <Navigate to="/profile" />
+              )
+            ) : (
+              <CompanySelect />
+            )
           }
         />
 
+        {/* Step 2: Login */}
         <Route
           path="/login"
           element={
@@ -45,35 +61,26 @@ const App = () => {
           }
         />
 
-        {/* Dashboard */}
+        {/* Admin Dashboard */}
         <Route
-          path="/dashboard"
+          path="/admin"
           element={
-            <ProtectedRoute>
-              <Dashboard />
+            <ProtectedRoute adminOnly={true}>
+              <Layout>
+                <AdminDashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />
 
-        {/* Reset password */}
-        <Route path="/reset-password" element={<ResetPassword />} />
-
-        {/* Booking */}
+        {/* Admin Users */}
         <Route
-          path="/booking"
+          path="/admin/users"
           element={
-            <ProtectedRoute>
-              <Booking />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* My Bookings */}
-        <Route
-          path="/my-bookings"
-          element={
-            <ProtectedRoute>
-              <MyBookings />
+            <ProtectedRoute adminOnly={true}>
+              <Layout>
+                <AdminUsers />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -88,42 +95,11 @@ const App = () => {
           }
         />
 
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <AdminDashboard />
-            </ProtectedRoute>
-          }
-        />
+        {/* Reset password */}
+        <Route path="/reset-password" element={<ResetPassword />} />
 
-        <Route
-          path="/admin/bookings"
-          element={
-            <AdminRoute>
-              <AdminBookings />
-            </AdminRoute>
-          }
-        />
-
-        <Route
-          path="/admin/profile"
-          element={
-            <AdminRoute>
-              <AdminProfile />
-            </AdminRoute>
-          }
-        />
-
-        {/* ✅ เพิ่มตรงนี้ */}
-        <Route
-          path="/admin/cost"
-          element={
-            <AdminRoute>
-              <AdminCost />
-            </AdminRoute>
-          }
-        />
+        {/* กัน path มั่ว */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>
   );

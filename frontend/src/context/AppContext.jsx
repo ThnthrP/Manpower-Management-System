@@ -44,11 +44,29 @@ export const AppContextProvider = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // const getUserData = async () => {
+  //   try {
+  //     const { data } = await axios.get(backendUrl + "/api/user/data", {
+  //       withCredentials: true,
+  //     });
+
+  //     if (data.success) {
+  //       setUserData(data.userData);
+  //       return data.userData;
+  //     }
+
+  //     return null;
+  //   } catch {
+  //     return null; // ห้าม toast ตรงนี้ (มันจะ spam ตอน refresh)
+  //   }
+  // };
+
   const getUserData = async () => {
     try {
-      const { data } = await axios.get(backendUrl + "/api/user/data", {
-        withCredentials: true,
-      });
+      const { data } = await axios.get(
+        backendUrl + "/api/user/data",
+        { withCredentials: true }, // 🔥 เพิ่มตรงนี้
+      );
 
       if (data.success) {
         setUserData(data.userData);
@@ -56,8 +74,9 @@ export const AppContextProvider = (props) => {
       }
 
       return null;
-    } catch {
-      return null; // ห้าม toast ตรงนี้ (มันจะ spam ตอน refresh)
+    } catch (err) {
+      console.log("GET USER ERROR:", err);
+      return null;
     }
   };
 

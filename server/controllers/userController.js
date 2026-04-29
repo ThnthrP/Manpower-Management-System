@@ -2,7 +2,22 @@ import prisma from "../config/prisma.js";
 
 export const getUserData = async (req, res) => {
   try {
-    const user = req.user;
+    const userId = req.user.id;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        role: {
+          include: {
+            permissions: {
+              include: {
+                permission: true,
+              },
+            },
+          },
+        },
+      },
+    });
 
     if (!user) {
       return res.json({
@@ -19,6 +34,7 @@ export const getUserData = async (req, res) => {
         phone: user.phone,
         department: user.department,
 
+        // 🔥 สำคัญ
         role: user.role?.name || null,
 
         permissions:
