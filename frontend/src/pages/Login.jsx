@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { AppContent } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
-import logo from "../assets/experteam_logo.png";
+import experteamLogo from "../assets/experteam_logo.png";
+import cesLogo from "../assets/ces_logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,6 +17,9 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const company = localStorage.getItem("company");
+  const companyLogo = company === "CES" ? cesLogo : experteamLogo;
 
   const onSubmitHandler = async (e) => {
     try {
@@ -128,7 +132,7 @@ const Login = () => {
       <div className="w-full max-w-md bg-white shadow-xl rounded-xl p-8">
         {/* LOGO */}
         <div className="flex flex-col items-center mb-6">
-          <img src={logo} alt="logo" className="w-14 mb-2" />
+          <img src={companyLogo} alt="logo" className="w-14 mb-2" />
           <h1 className="text-xl font-semibold text-gray-800">
             Manpower Management
           </h1>

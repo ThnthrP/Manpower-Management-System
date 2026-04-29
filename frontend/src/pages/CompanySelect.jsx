@@ -14,7 +14,7 @@ const CompanySelect = () => {
       label: "Construction Services",
       desc: "Project execution, manpower planning, and construction operations",
       key: "CES",
-      logo: "/ces-logo.png",
+      logo: "/ces_logo.png",
     },
     {
       name: "EXPERT TEAM",
