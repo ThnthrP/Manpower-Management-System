@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppContent } from "../../context/AppContext";
+import { CES_MENU, EXPERT_MENU } from "./sidebarMenu";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -8,112 +9,46 @@ const Sidebar = () => {
   const { userData } = useContext(AppContent);
 
   const role = userData?.role?.name || "guest";
+  const company = userData?.company?.name; // 🔥 สำคัญ
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => location.pathname.startsWith(path);
 
-  // 🔥 function เช็คว่า role นี้เห็น menu ไหม
   const allow = (roles) => {
     if (!roles) return true;
     return roles.includes(role);
   };
 
-  const menu = [
-    {
-      section: "MAIN",
-      items: [{ name: "Dashboard", path: "/dashboard" }],
-    },
+  // 🔥 เลือก menu
+  let menu = [];
 
-    {
-      section: "PHASE 1 — ONBOARDING",
-      items: [
-        { name: "Workers", path: "/workers", roles: ["admin", "hr"] },
-        { name: "Add Worker", path: "/workers/add", roles: ["admin", "hr"] },
-        { name: "Training Matrix", path: "/training-matrix" },
-      ],
-    },
-
-    {
-      section: "PHASE 2 — REQUEST",
-      items: [
-        { name: "Request Manpower", path: "/requests", roles: ["pe"] },
-        { name: "My Requests", path: "/my-requests", roles: ["pe"] },
-        { name: "Approval Queue", path: "/approvals", roles: ["mp", "admin"] },
-      ],
-    },
-
-    {
-      section: "PHASE 3 — COMPLIANCE",
-      items: [
-        {
-          name: "Certifications",
-          path: "/certifications",
-          roles: ["hr", "admin"],
-        },
-        {
-          name: "Training Requirement",
-          path: "/training-requirement",
-          roles: ["hr"],
-        },
-        {
-          name: "Eligibility Check",
-          path: "/eligibility",
-          roles: ["mp", "admin"],
-        },
-      ],
-    },
-
-    {
-      section: "PHASE 4 — DEPLOYMENT",
-      items: [
-        { name: "Projects", path: "/projects" },
-        { name: "Allocation", path: "/allocation", roles: ["mp", "admin"] },
-        { name: "Mobilization", path: "/mobilization", roles: ["mp"] },
-      ],
-    },
-
-    {
-      section: "PHASE 5 — SAFETY",
-      items: [
-        { name: "HSE / Safety", path: "/safety", roles: ["safety", "admin"] },
-        { name: "PPE / Medical", path: "/ppe", roles: ["nurse", "safety"] },
-      ],
-    },
-
-    {
-      section: "INSIGHTS",
-      items: [
-        {
-          name: "Analytics & Reports",
-          path: "/reports",
-          roles: ["admin", "manager"],
-        },
-        {
-          name: "Client Feedback",
-          path: "/feedback",
-          roles: ["admin", "manager"],
-        },
-      ],
-    },
-
-    {
-      section: "SYSTEM",
-      items: [
-        { name: "Notifications", path: "/notifications" },
-        { name: "User Management", path: "/admin/users", roles: ["admin"] },
-        { name: "Admin Settings", path: "/admin/settings", roles: ["admin"] },
-      ],
-    },
-  ];
+  if (company === "CES") {
+    menu = CES_MENU;
+  } else if (company === "EXPERT") {
+    menu = EXPERT_MENU;
+  }
 
   return (
     <div className="w-64 h-screen bg-slate-900 text-white p-4 overflow-y-auto">
-      <h2 className="text-lg font-bold mb-6">MMS Panel</h2>
+      {/* 🔥 HEADER */}
+      <div className="mb-6">
+        <h2 className="text-lg font-bold">MMS Panel</h2>
 
+        {/* 👇 แสดงบริษัท */}
+        <div className="text-xs mt-1 font-semibold">
+          {company === "CES" && (
+            <span className="text-blue-400">🏗️ CES (Construction)</span>
+          )}
+          {company === "EXPERT" && (
+            <span className="text-purple-400">🔧 EXPERT (Maintenance)</span>
+          )}
+          {!company && <span className="text-red-400">No Company</span>}
+        </div>
+      </div>
+
+      {/* 🔥 MENU */}
       {menu.map((group, idx) => {
-        // 🔥 filter item ตาม role
         const filteredItems = group.items.filter((item) => allow(item.roles));
 
-        // ❗ ถ้าไม่มี item เลย ไม่ต้องแสดง section
         if (filteredItems.length === 0) return null;
 
         return (

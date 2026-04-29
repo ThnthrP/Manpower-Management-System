@@ -57,34 +57,37 @@ model User {
   password String
 
   roleId String
-  role   Role @relation(fields: [roleId], references: [id])
+  role   Role   @relation(fields: [roleId], references: [id])
 
-  employeeId String? @unique
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  employeeId String?   @unique
   employee   Employee? @relation(fields: [employeeId], references: [id])
 
-  requests  ManpowerRequest[] @relation("UserRequests")
+  requests  ManpowerRequest[]  @relation("UserRequests")
   logs      WorkflowLog[]
   decisions CustomerDecision[]
 
   createdAt DateTime @default(now())
 
-  resetOtp           String?
-  resetOtpExpireAt   DateTime?
+  resetOtp         String?
+  resetOtpExpireAt DateTime?
 }
 
 model Role {
   id   String @id @default(uuid())
   name String @unique
 
-  users       User[]
+  users User[]
 
   permissions RolePermission[]
 }
 
 model Permission {
-  id       String @id @default(uuid())
-  resource String
-  action   String
+  id          String  @id @default(uuid())
+  resource    String
+  action      String
   description String?
 
   roles RolePermission[]
@@ -112,6 +115,7 @@ model Company {
   type String
 
   employees Employee[]
+  users     User[]
 }
 
 //////////////////////
@@ -123,9 +127,9 @@ model Employee {
   empCode  String @unique
   fullName String
 
-  status String @default("active")
+  status          String  @default("active")
   servicePosition String?
-  isOffshore Boolean @default(false)
+  isOffshore      Boolean @default(false)
 
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
@@ -152,7 +156,7 @@ model Employee {
 //////////////////////
 
 model SafetyCheck {
-  id         String @id @default(uuid())
+  id         String      @id @default(uuid())
   employeeId String
   status     CheckStatus @default(pending)
 
@@ -162,7 +166,7 @@ model SafetyCheck {
 }
 
 model MedicalCheck {
-  id         String @id @default(uuid())
+  id         String      @id @default(uuid())
   employeeId String
   status     CheckStatus @default(pending)
 
@@ -208,7 +212,7 @@ model EmployeeTraining {
   employeeId String
   trainingId String
 
-  status String
+  status     String
   expiryDate DateTime? // เพิ่ม
 
   employee Employee @relation(fields: [employeeId], references: [id])
@@ -231,7 +235,7 @@ model HealthCertificate {
   id         String @id @default(uuid())
   employeeId String
 
-  type String
+  type       String
   issueDate  DateTime
   expiryDate DateTime
   status     String
@@ -266,20 +270,20 @@ model ManpowerRequest {
   servicePosition String
   quantity        Int
 
-  startDate DateTime?
-  endDate   DateTime?
-  isOffshore Boolean @default(false)
+  startDate  DateTime?
+  endDate    DateTime?
+  isOffshore Boolean   @default(false)
 
   selectionMode SelectionMode @default(manual)
   status        RequestStatus @default(draft)
 
   requestedById String
-  requestedBy   User @relation("UserRequests", fields: [requestedById], references: [id])
+  requestedBy   User   @relation("UserRequests", fields: [requestedById], references: [id])
 
-  rounds CandidateRound[]
+  rounds   CandidateRound[]
   bookings Booking[]
 
-  createdAt DateTime @default(now())
+  createdAt        DateTime           @default(now())
   CustomerDecision CustomerDecision[]
 }
 
@@ -342,7 +346,7 @@ model Booking {
   requestId  String
   employeeId String
 
-  status String // pending / approved / deployed
+  status     String // pending / approved / deployed
   approvedBy String?
 
   request  ManpowerRequest @relation(fields: [requestId], references: [id])

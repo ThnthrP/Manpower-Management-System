@@ -5,15 +5,18 @@ import { AppContent } from "../context/AppContext";
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { isLoggedin, loading, userData } = useContext(AppContent);
 
-  if (loading) return <div>Loading...</div>;
+  // 🔥 รอข้อมูลให้ครบก่อน
+  if (loading || (isLoggedin && !userData)) {
+    return <div>Loading...</div>;
+  }
 
   if (!isLoggedin) {
     return <Navigate to="/" />;
   }
 
-  // ✅ ใช้ string ตรง ๆ
-  if (adminOnly && userData?.role !== "admin") {
-    return <Navigate to="/profile" />; // 🔥 เปลี่ยนตรงนี้
+  // 🔥 FIX ตรงนี้
+  if (adminOnly && userData?.role?.name !== "admin") {
+    return <Navigate to="/profile" />;
   }
 
   return children;

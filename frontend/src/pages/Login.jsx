@@ -80,8 +80,8 @@ const Login = () => {
         // const isAdmin = user.role === "admin";
         // const isAdmin = user.role?.name === "admin";
 
-        // const role = user.role?.name;
-        const role = user.role;
+        const role = user.role?.name;
+        // const role = user.role;
 
         if (role === "admin") {
           navigate("/admin");

@@ -38,11 +38,28 @@ const App = () => {
           path="/"
           element={isLoggedin ? <Navigate to="/admin" /> : <CompanySelect />}
         /> */}
-        <Route
+        {/* <Route
           path="/"
           element={
             isLoggedin ? (
               userData?.role === "admin" ? (
+                <Navigate to="/admin" />
+              ) : (
+                <Navigate to="/profile" />
+              )
+            ) : (
+              <CompanySelect />
+            )
+          }
+        /> */}
+        
+        <Route
+          path="/"
+          element={
+            isLoggedin ? (
+              !userData ? (
+                <div>Loading...</div> // 🔥 รอ userData ก่อน
+              ) : userData.role?.name === "admin" ? (
                 <Navigate to="/admin" />
               ) : (
                 <Navigate to="/profile" />

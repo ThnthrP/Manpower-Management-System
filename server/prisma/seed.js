@@ -265,9 +265,18 @@ async function main() {
 
   const allRoles = await prisma.role.findMany();
   const roleMap = {};
+
   for (const r of allRoles) {
     roleMap[r.name] = r.id;
   }
+
+  // เพิ่มตรงนี้
+  const adminRoleId = roleMap["admin"];
+
+  if (!adminRoleId) {
+    throw new Error("Admin role not found");
+  }
+
   console.log(`   ✓ ${allRoles.length} roles`);
 
   // ── 3. RolePermissions ───────────────────────────────────
@@ -297,28 +306,67 @@ async function main() {
   });
   console.log(`${rpData.length} role-permission mappings`);
 
-  // ── 4. Admin user ─────────────────────────────────────────
-  console.log("4 Seeding admin user...");
-  const adminRoleId = roleMap["admin"];
+  // ── 4. Company ─────────────────────────────────────────
+  await prisma.company.createMany({
+    data: [
+      { name: "CES", type: "construction" },
+      { name: "EXPERT", type: "maintenance" },
+    ],
+    skipDuplicates: true,
+  });
+
+  // ดึง company
+  const cesCompany = await prisma.company.findFirst({
+    where: { name: "CES" },
+  });
+
+  const expertCompany = await prisma.company.findFirst({
+    where: { name: "EXPERT" },
+  });
+
+  if (!cesCompany || !expertCompany) {
+    throw new Error("Company not found. Please check seed.");
+  }
+
+  // ── 5. Admin users ─────────────────────────────────────
+
   const hashedPassword = await bcrypt.hash("admin1234", 10);
 
+  // CES Admin
   await prisma.user.upsert({
-    where: { email: "admin@mms.com" },
+    where: { email: "admin_ces@mms.com" },
     update: {},
     create: {
-      name: "System Admin",
-      email: "admin@mms.com",
+      name: "Admin CES",
+      email: "admin_ces@mms.com",
       password: hashedPassword,
       roleId: adminRoleId,
+      companyId: cesCompany.id,
     },
   });
-  console.log("admin@mms.com / admin1234");
+
+  // EXPERT Admin
+  await prisma.user.upsert({
+    where: { email: "admin_expert@mms.com" },
+    update: {},
+    create: {
+      name: "Admin EXPERT",
+      email: "admin_expert@mms.com",
+      password: hashedPassword,
+      roleId: adminRoleId,
+      companyId: expertCompany.id,
+    },
+  });
 
   // ── Summary ───────────────────────────────────────────────
   console.log("\n Seed complete!");
   console.log(`   Roles       : ${roleNames.length}`);
   console.log(`   Permissions : ${allPerms.length}`);
   console.log(`   Mappings    : ${rpData.length}`);
+  console.log("👤 admin_ces@mms.com / admin1234");
+  console.log("👤 admin_expert@mms.com / admin1234");
+  console.log("CES ID:", cesCompany.id);
+  console.log("EXPERT ID:", expertCompany.id);
 }
 
 main()

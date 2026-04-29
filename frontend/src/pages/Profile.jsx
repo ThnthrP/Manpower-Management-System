@@ -67,13 +67,25 @@ const Profile = () => {
       <div className="max-w-xl mx-auto mt-6 bg-white p-5 rounded-xl shadow space-y-4">
         <h1 className="text-2xl font-bold text-center">My Profile</h1>
 
+        <div className="mt-2">
+          <span className="text-xs text-gray-500">Company</span>
+          <div className="mt-1">
+            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+              {userData?.company?.name || "No company"}
+            </span>
+          </div>
+        </div>
+
         {/* NAME */}
         <div>
           <div className="mt-2">
             <span className="text-xs text-gray-500">Role</span>
             <div className="mt-1">
-              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+              {/* <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
                 {userData?.role}
+              </span> */}
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                {userData?.role?.name || "No role"}
               </span>
             </div>
           </div>
