@@ -1,11 +1,11 @@
 import React, { useContext, useState, useEffect } from "react";
 // import { assets } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
-import { AppContent } from "../context/AppContext";
+import { AppContent } from "../../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
-import experteamLogo from "../assets/experteam_logo.png";
-import cesLogo from "../assets/ces_logo.png";
+import experteamLogo from "../../assets/experteam_logo.png";
+import cesLogo from "../../assets/ces_logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -43,6 +43,7 @@ const Login = () => {
           name,
           email,
           password,
+          company,
         });
         data = res.data;
 
@@ -83,21 +84,36 @@ const Login = () => {
 
         // const isAdmin = user.role === "admin";
         // const isAdmin = user.role?.name === "admin";
+        const ROLE_REDIRECT = {
+          admin: "/admin",
+          pe: "/pe",
+          pe_head: "/pe_head",
+          manpower: "/manpower",
+          hr: "/hr",
+          safety: "/safety",
+          nurse: "/nurse",
+          ta: "/ta",
+          expert: "/expert",
+          bd: "/bd",
+        };
 
         const role = user.role?.name;
+        const redirectTo = ROLE_REDIRECT[role] ?? "/profile";
+        navigate(redirectTo);
+
+        // const role = user.role?.name;
         // const role = user.role;
 
-        if (role === "admin") {
-          navigate("/admin");
-        } else if (role === "pe") {
-          navigate("/profile"); // หรือ /pe ในอนาคต
-        } else if (role === "mp") {
-          navigate("/profile"); // หรือ /mp
-        } else {
-          navigate("/profile");
-        }
-
-        // navigate(isAdmin ? "/admin" : "/dashboard");
+        // if (role === "admin") {
+        //   navigate("/admin");
+        // } else if (role === "pe") {
+        //   navigate("/profile"); // หรือ /pe ในอนาคต
+        // } else if (role === "mp") {
+        //   navigate("/profile"); // หรือ /mp
+        // } else {
+        //   navigate("/profile");
+        // }
+        // // navigate(isAdmin ? "/admin" : "/dashboard");
       } else {
         toast.error(data.message);
       }

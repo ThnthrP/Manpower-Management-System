@@ -17,10 +17,10 @@ const CompanySelect = () => {
       logo: "/ces_logo.png",
     },
     {
-      name: "EXPERT TEAM",
+      name: "EXPERTEAM",
       label: "Maintenance",
       desc: "Specialized workforce, offshore support, and technical services",
-      key: "EXPERT",
+      key: "EXPERTEAM",
       logo: "/experteam_logo.png",
     },
   ];

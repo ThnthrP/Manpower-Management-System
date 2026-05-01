@@ -6,43 +6,28 @@ const AdminUsers = () => {
   const [roles, setRoles] = useState({});
   const [roleList, setRoleList] = useState([]);
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const [companies, setCompanies] = useState([]);
-  const [companyMap, setCompanyMap] = useState({});
 
-  // 🔹 โหลด users + roles
+  // โหลด users + roles
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [userRes, roleRes, companyRes] = await Promise.all([
+        const [userRes, roleRes] = await Promise.all([
           axios.get(backendUrl + "/api/user/all", { withCredentials: true }),
           axios.get(backendUrl + "/api/user/roles", { withCredentials: true }),
-          axios.get(backendUrl + "/api/user/companies", {
-            withCredentials: true,
-          }),
         ]);
 
         if (userRes.data.success) {
           setUsers(userRes.data.users);
 
-          // เก็บ roleId ของแต่ละ user
           const initialRoles = {};
           userRes.data.users.forEach((u) => {
             initialRoles[u.id] = u.role?.id;
           });
           setRoles(initialRoles);
-
-          const initialCompanies = {};
-          userRes.data.users.forEach((u) => {
-            initialCompanies[u.id] = u.company?.id || "";
-          });
-          setCompanyMap(initialCompanies);
         }
 
         if (roleRes.data.success) {
           setRoleList(roleRes.data.roles);
-        }
-        if (companyRes.data.success) {
-          setCompanies(companyRes.data.companies);
         }
       } catch (error) {
         console.error(error);
@@ -52,7 +37,7 @@ const AdminUsers = () => {
     loadData();
   }, []);
 
-  // 🔹 เปลี่ยนค่า dropdown
+  // เปลี่ยน role
   const handleChange = (userId, roleId) => {
     setRoles((prev) => ({
       ...prev,
@@ -60,49 +45,34 @@ const AdminUsers = () => {
     }));
   };
 
-  // 🔹 save role
+  // save role อย่างเดียว
   const handleSave = async (userId) => {
     try {
       const roleId = roles[userId];
-      const companyId = companyMap[userId];
 
-      // 🔥 ยิงพร้อมกัน (เร็วกว่า)
-      const [roleRes, companyRes] = await Promise.all([
-        axios.put(
-          backendUrl + "/api/user/role",
-          { userId, roleId },
-          { withCredentials: true },
-        ),
-        axios.put(
-          backendUrl + "/api/user/company",
-          { userId, companyId },
-          { withCredentials: true },
-        ),
-      ]);
+      const res = await axios.put(
+        backendUrl + "/api/user/role",
+        { userId, roleId },
+        { withCredentials: true },
+      );
 
-      // 🔥 check success
-      if (roleRes.data.success && companyRes.data.success) {
+      if (res.data.success) {
         alert("Updated successfully");
 
-        // 🔥 refresh users
-        const res = await axios.get(backendUrl + "/api/user/all", {
+        // reload users
+        const userRes = await axios.get(backendUrl + "/api/user/all", {
           withCredentials: true,
         });
 
-        if (res.data.success) {
-          setUsers(res.data.users);
+        if (userRes.data.success) {
+          setUsers(userRes.data.users);
 
-          // reset dropdown state ใหม่ด้วย
           const updatedRoles = {};
-          const updatedCompanies = {};
-
-          res.data.users.forEach((u) => {
+          userRes.data.users.forEach((u) => {
             updatedRoles[u.id] = u.role?.id;
-            updatedCompanies[u.id] = u.company?.id || "";
           });
 
           setRoles(updatedRoles);
-          setCompanyMap(updatedCompanies);
         }
       } else {
         alert("Update failed");
@@ -134,7 +104,7 @@ const AdminUsers = () => {
               <td className="p-2">{u.name}</td>
               <td>{u.email}</td>
 
-              {/* 🔥 Dropdown */}
+              {/* Role dropdown */}
               <td>
                 <select
                   value={roles[u.id] || ""}
@@ -149,27 +119,24 @@ const AdminUsers = () => {
                 </select>
               </td>
 
+              {/* 🔥 Company (read-only) */}
               <td>
-                <select
-                  value={companyMap[u.id] || ""}
-                  onChange={(e) =>
-                    setCompanyMap((prev) => ({
-                      ...prev,
-                      [u.id]: e.target.value,
-                    }))
-                  }
-                  className="border p-1 rounded"
+                <span
+                  className={`px-2 py-1 rounded text-xs font-semibold
+                    ${
+                      u.company?.name === "CES"
+                        ? "bg-blue-100 text-blue-700"
+                        : u.company?.name === "EXPERTEAM"
+                          ? "bg-purple-100 text-purple-700"
+                          : "bg-gray-100 text-gray-500"
+                    }
+                  `}
                 >
-                  <option value="">No Company</option>
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                  {u.company?.name || "No Company"}
+                </span>
               </td>
 
-              {/* 🔥 Save */}
+              {/* Save */}
               <td>
                 <button
                   onClick={() => handleSave(u.id)}

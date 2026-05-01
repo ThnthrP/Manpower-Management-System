@@ -9,13 +9,18 @@ import {
 
 // ================= REGISTER =================
 export const register = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, company } = req.body;
 
-  if (!name || !email || !password) {
+  if (!["CES", "EXPERTEAM"].includes(company)) {
+    return res.json({ success: false, message: "Invalid company" });
+  }
+
+  if (!name || !email || !password || !company) {
     return res.json({ success: false, message: "Missing Details" });
   }
 
   try {
+    // check duplicate
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -24,66 +29,37 @@ export const register = async (req, res) => {
       return res.json({ success: false, message: "User already exists" });
     }
 
+    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // หา role "user"
-    // const userRole = await prisma.role.findUnique({
-    //   where: { name: "user" },
-    // });
+    // find company
+    const foundCompany = await prisma.company.findFirst({
+      where: { name: company },
+    });
 
+    if (!foundCompany) {
+      return res.json({ success: false, message: "Company not found" });
+    }
+
+    // default role
     const userRole = await prisma.role.findUnique({
       where: { name: "pe" },
     });
 
-    if (!userRole) {
-      return res.json({ success: false, message: "Role not found" });
-    }
-
+    // create user
     const newUser = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         roleId: userRole.id,
-      },
-      include: {
-        role: true,
+        companyId: foundCompany.id,
       },
     });
-
-    const token = jwt.sign({ userId: newUser.id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    // res.cookie("token", token, {
-    //   httpOnly: true,
-    //   // secure: false,
-    //   // sameSite: "lax",
-    //   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    //   secure: process.env.NODE_ENV === "production",
-    // });
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax", // 🔥 เปลี่ยนตรงนี้
-      secure: false, // 🔥 dev ต้อง false
-    });
-
-    // res.cookie("token", token, {
-    //   httpOnly: true,
-    //   sameSite: "lax", // ✅ FIX
-    //   secure: false, // ✅ dev
-    //   maxAge: 7 * 24 * 60 * 60 * 1000,
-    // });
 
     return res.json({
       success: true,
       message: "User registered successfully",
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-      },
     });
   } catch (error) {
     res.json({ success: false, message: error.message });
@@ -92,12 +68,13 @@ export const register = async (req, res) => {
 
 // ================= LOGIN =================
 export const login = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, company } = req.body;
 
   try {
     const user = await prisma.user.findUnique({
       where: { email },
       include: {
+        company: true,
         role: {
           include: {
             permissions: {
@@ -110,40 +87,38 @@ export const login = async (req, res) => {
       },
     });
 
+    // เช็ค email
     if (!user) {
       return res.json({ success: false, message: "Invalid email" });
     }
 
+    // เช็ค password
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.json({ success: false, message: "Invalid password" });
     }
 
+    // เช็ค company
+    if (!company) {
+      return res.json({ success: false, message: "Company is required" });
+    }
+
+    if (user.company?.name !== company) {
+      return res.json({
+        success: false,
+        message: "You cannot login to this company",
+      });
+    }
+
+    // 🔹 สร้าง token
     const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    // res.cookie("token", token, {
-    //   httpOnly: true,
-    //   // secure: process.env.NODE_ENV === "production",
-    //   // sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-    //   sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    //   secure: process.env.NODE_ENV === "production",
-    //   maxAge: 7 * 24 * 60 * 60 * 1000,
-    // });
-
-    // res.cookie("token", token, {
-    //   httpOnly: true,
-    //   sameSite: "none", // 🔥 FIX ตัวจริง
-    //   secure: false, // dev ต้อง false
-    //   maxAge: 7 * 24 * 60 * 60 * 1000,
-    // });
-
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax", // ✅ FIX
-      secure: false, // ✅ dev
+      sameSite: "lax",
+      secure: false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -154,8 +129,8 @@ export const login = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        // role: user.role,
         role: user.role.name,
+        company: user.company?.name, // เพิ่มไว้ใช้ฝั่ง frontend
         permissions: user.role.permissions.map(
           (p) => `${p.permission.resource}:${p.permission.action}`,
         ),
