@@ -1,9 +1,9 @@
 import React, { useContext, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { AppContent } from "../context/AppContext";
+import { AppContent } from "../../context/AppContext";
 import { toast } from "react-toastify";
-import logo from "../assets/experteam_logo.png";
+import logo from "../../assets/experteam_logo.png";
 
 const ResetPassword = () => {
   const { backendUrl } = useContext(AppContent);

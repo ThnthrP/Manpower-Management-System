@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
-import Navbar from "../components/Layout/Navbar";
+import Navbar from "../../components/Layout/Navbar";
 import axios from "axios";
-import { AppContent } from "../context/AppContext";
+import { AppContent } from "../../context/AppContext";
 import { toast } from "react-toastify";
 
 const Profile = () => {

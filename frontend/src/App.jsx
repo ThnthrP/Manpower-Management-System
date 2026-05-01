@@ -1,19 +1,9 @@
 import React, { useContext, useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-
-import Login from "./pages/Login";
-import ResetPassword from "./pages/ResetPassword";
-import Profile from "./pages/Profile";
-import CompanySelect from "./pages/CompanySelect";
-
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminUsers from "./pages/admin/AdminUsers";
-
-import ProtectedRoute from "./components/ProtectedRoute";
-import Layout from "./components/layout/Layout";
-
 import { AppContent } from "./context/AppContext";
+import { sharedRoutes } from "./routes/shared/SharedRoutes";
+import CompanyRouter from "./routes/company/CompanyRouter";
 
 const App = () => {
   const { isLoggedin, loading, userData } = useContext(AppContent);
@@ -32,90 +22,44 @@ const App = () => {
       <ToastContainer />
 
       <Routes>
-        {/* 🔹 Step 1: เลือกบริษัท */}
-        {/* <Route path="/" element={<CompanySelect />} /> */}
+        {/* root */}
         {/* <Route
-          path="/"
-          element={isLoggedin ? <Navigate to="/admin" /> : <CompanySelect />}
-        /> */}
-        {/* <Route
-          path="/"
-          element={
-            isLoggedin ? (
-              userData?.role === "admin" ? (
-                <Navigate to="/admin" />
-              ) : (
-                <Navigate to="/profile" />
-              )
-            ) : (
-              <CompanySelect />
-            )
-          }
-        /> */}
-        
-        <Route
           path="/"
           element={
             isLoggedin ? (
               !userData ? (
-                <div>Loading...</div> // 🔥 รอ userData ก่อน
+                <div>Loading...</div>
               ) : userData.role?.name === "admin" ? (
                 <Navigate to="/admin" />
               ) : (
                 <Navigate to="/profile" />
               )
             ) : (
-              <CompanySelect />
+              <Navigate to="/company-select" />
+            )
+          }
+        /> */}
+        <Route
+          path="/"
+          element={
+            isLoggedin ? (
+              !userData ? (
+                <div>Loading...</div>
+              ) : (
+                <Navigate to="/admin" /> // ทุก role ไป admin
+              )
+            ) : (
+              <Navigate to="/company-select" />
             )
           }
         />
 
-        {/* Step 2: Login */}
-        <Route
-          path="/login"
-          element={
-            localStorage.getItem("company") ? <Login /> : <Navigate to="/" />
-          }
-        />
+        {/* shared */}
+        {sharedRoutes()}
 
-        {/* Admin Dashboard */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <Layout>
-                <AdminDashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/admin/*" element={<CompanyRouter />} />
 
-        {/* Admin Users */}
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute adminOnly={true}>
-              <Layout>
-                <AdminUsers />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Profile */}
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Reset password */}
-        <Route path="/reset-password" element={<ResetPassword />} />
-
-        {/* กัน path มั่ว */}
+        {/* fallback */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </div>

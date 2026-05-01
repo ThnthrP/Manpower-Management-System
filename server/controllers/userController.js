@@ -124,7 +124,22 @@ export const getAllRoles = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
+    const currentUser = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { company: true },
+    });
+
+    if (!currentUser?.companyId) {
+      return res.json({
+        success: false,
+        message: "No company assigned",
+      });
+    }
+
     const users = await prisma.user.findMany({
+      where: {
+        companyId: currentUser.companyId,
+      },
       include: {
         role: true,
         company: true,
