@@ -1,0 +1,862 @@
+// ============================================================
+// schema.prisma — MMS v5.2
+// แก้ไขจาก v5.1:
+//   Fix: RequirementLevel (S/B/A/A1) → RequirementType (M/R/X/O)
+//        ตรงกับ symbol จริงใน Excel ของแต่ละ client
+//        Chevron: X = Minimum Required, O = Assigned by company
+//        Erawan:  M = Mandatory, R = Relevant person only
+//        PTT:     X (ไม่มี note — เก็บเป็น required)
+//        Valeura: X (ไม่มี note — เก็บเป็น required)
+//   Fix: PositionRequirement เพิ่ม sourceMatrixCode + sourceMatrixSheet
+//        สำหรับ audit trail และ debug
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────
+
+enum RequestStatus {
+  draft
+  submitted
+  matching
+  proposing
+  waiting_customer
+  approved
+  rejected
+  booked
+  deployed
+}
+
+enum SelectionMode {
+  auto
+  manual
+}
+
+enum MatchStatus {
+  proposed
+  approved
+  rejected
+}
+
+enum AssignmentStatus {
+  planned
+  active
+  completed
+}
+
+enum CheckStatus {
+  pending
+  passed
+  failed
+  overdue
+  due_soon
+  not_required
+}
+
+enum TrainingStatus {
+  completed // ปกติ — cert ยังไม่หมด
+  due_soon // Due date — ใกล้หมดอายุ
+  overdue // Over Due — หมดอายุแล้ว
+  pending // Pending — ยังไม่มี cert
+  if_required // If required — ทำเมื่อจำเป็น
+  not_applicable // N/A
+}
+
+enum TrainingSource {
+  COMPANY_ELEARNING
+  TPTI
+  CONTRACTOR
+  PUBLIC
+}
+
+// แก้ไข: RequirementLevel (S/B/A/A1) → RequirementType (M/R/X/O)
+// ตรงกับ symbol จริงใน matrix Excel ของทุก client
+enum RequirementType {
+  mandatory // M — Erawan: บังคับทุกคน
+  relevant // R — Erawan: เฉพาะบุคคลที่เกี่ยวข้อง (see SSHE Course Catalog)
+  required // X — Chevron minimum required / PTT / Valeura
+  assigned // O — Chevron: required as assigned by company
+}
+
+enum ContractType {
+  manpower_supply // supply คน
+  material_supply // supply material + คน
+  maintenance // งาน maintain
+  project // งาน project-based
+}
+
+enum GapType {
+  training
+  medical
+}
+
+enum GapStatus {
+  passed // มีและยังไม่หมดอายุ
+  missing // ยังไม่มีเลย
+  overdue // มีแต่หมดอายุแล้ว
+  due_soon // ใกล้หมดอายุ
+}
+
+// ADD 2: Subcontractor request lifecycle (จาก flowchart)
+enum SubRequestStatus {
+  inquiring // MP โทรถามจำนวนและ availability
+  quote_requested // MP ส่ง email ขอ quote Cert/CV
+  quote_received // ได้รับ price quote แล้ว
+  sse_review // SSE กำลัง review CV/Cert
+  approved // MP sign off hiring approval
+  rejected // ไม่ผ่าน (cert ไม่ครบ / หาคนไม่ได้)
+  cancelled // cancel
+}
+
+// ADD 3: MobilizationTask type (post-deploy tasks จาก flowchart)
+enum MobilizationTaskType {
+  vessel_booking // MP book ลงเรือ
+  line_group // สร้างกลุ่มไลน์ + ดึงพนักงานเข้ากลุ่ม
+  ppe_preparation // จัดเตรียม PPE
+  transport_booking // book car / transport ขึ้น-ลงงาน
+  hotel_booking // จองห้องพัก standby ล่วงหน้า 1 วัน
+  accounting_notify // แจ้งการเดินทางไปยังฝ่ายบัญชี
+  drug_test // ใบเบิกชุดตรวจสาร (defer — ยังมีคำถามเปิด)
+}
+
+enum MobilizationTaskStatus {
+  pending
+  in_progress
+  completed
+  not_required
+}
+
+// ─────────────────────────────────────────────────────────
+// USER & RBAC
+// ─────────────────────────────────────────────────────────
+
+model User {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
+
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  employeeId String?   @unique
+  employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  requests  ManpowerRequest[] @relation("UserRequests")
+  logs      WorkflowLog[]
+  decisions ClientApproval[]
+
+  createdAt        DateTime  @default(now())
+  resetOtp         String?
+  resetOtpExpireAt DateTime?
+}
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  resource    String
+  action      String
+  description String?
+  roles       RolePermission[]
+
+  @@unique([resource, action])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@id([roleId, permissionId])
+}
+
+// ─────────────────────────────────────────────────────────
+// COMPANY
+// ─────────────────────────────────────────────────────────
+
+model Company {
+  id   String @id @default(uuid())
+
+  name String @unique // "CES", "EXPERTEAM"
+
+  type String         // "main" / "subcontractor"
+
+  employees      Employee[]
+  users          User[]
+  clients        Client[]
+  subcontractors Subcontractor[]
+}
+
+// ─────────────────────────────────────────────────────────
+// CLIENT
+// ─────────────────────────────────────────────────────────
+
+model Client {
+  id String @id @default(uuid())
+
+  name String
+  code String @unique
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  contracts           Contract[]
+  medicalRequirements MedicalRequirement[]
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// FIX 4: CONTRACT LAYER
+// Client → Contract → Project → ManpowerRequest
+// แต่ละ contract มี matrix version และ position set ของตัวเอง
+// Chevron Rev07 และ Rev08 จะเป็น 2 contract ต่างกัน
+// ─────────────────────────────────────────────────────────
+
+model Contract {
+  id String @id @default(uuid())
+
+  name       String
+  contractNo String
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  // Relations
+  clientTrainings      ClientTraining[]
+  positionRequirements PositionRequirement[]
+  projects             Project[]
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@unique([clientId, contractNo])
+}
+
+// ─────────────────────────────────────────────────────────
+// FIX 3: POSITION model
+// normalize ชื่อตำแหน่ง ป้องกัน "Rigger" vs "Rigger/Scaffolder" ซ้ำกัน
+// ─────────────────────────────────────────────────────────
+
+model Position {
+  id         String  @id @default(uuid())
+  name       String  @unique // canonical name
+  nameTH     String?
+  category   String? // "Technical" / "Supervisory" / "Engineering"
+  isOffshore Boolean @default(false)
+
+  requirements          PositionRequirement[]
+  employees             Employee[]             @relation("PrimaryPosition")
+  requests              ManpowerRequest[]
+  subcontractorRequests SubcontractorRequest[] // ADD 2
+}
+
+// ─────────────────────────────────────────────────────────
+// EMPLOYEE
+// ─────────────────────────────────────────────────────────
+
+model Employee {
+  id         String  @id @default(uuid())
+  empCode    String  @unique
+  fullName   String
+  fullNameTH String?
+
+  status     String  @default("active")
+  division   String? // "Scaffold&Paint", "Mechanical"
+  isOffshore Boolean @default(false)
+
+  positionId String?
+  position   Position? @relation("PrimaryPosition", fields: [positionId], references: [id])
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  user User?
+
+  covidVac    String?
+  pdpaConsent Boolean?
+
+  trainings     EmployeeTraining[]
+  medicalChecks MedicalCheck[]
+  skills        EmployeeSkill[]
+  safetyChecks  SafetyCheck[]
+
+  candidates         Candidate[]
+  assignments        Assignment[]
+  bookings           Booking[]
+  subcontractorHires SubcontractorHire[] // Fix 2
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// FIX 1A: GLOBAL TRAINING
+// หลักสูตรกลาง — canonical, dedup ข้าม client
+// เช่น BOSIET = 1 record เท่านั้น
+// ─────────────────────────────────────────────────────────
+
+model GlobalTraining {
+  id       String  @id @default(uuid())
+  name     String  @unique // canonical name
+  fullName String?
+
+  description String?
+
+  trainingStandards TrainingStandard[]
+
+  clientTrainings   ClientTraining[]
+  employeeTrainings EmployeeTraining[]
+  candidateGaps     CandidateGap[] // FIX A: FK จาก CandidateGap
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// FIX 1B: CLIENT TRAINING
+// Override / alias ของ GlobalTraining ต่อ Contract
+// เช่น Chevron เรียก "Basic Rigging (DNV GL)" แต่ global คือ "Basic Rigging"
+// ─────────────────────────────────────────────────────────
+
+model TrainingStandard {
+  id String @id @default(uuid())
+
+  globalTrainingId String
+
+  source TrainingSource?
+
+  trainingHours Float?
+
+  validityDays Int?
+
+  isNoExpiry Boolean @default(false)
+
+  globalTraining GlobalTraining @relation(fields: [globalTrainingId], references: [id])
+
+  clientTrainings ClientTraining[]
+
+  createdAt DateTime @default(now())
+
+  @@index([globalTrainingId, source])
+}
+
+model ClientTraining {
+  id               String @id @default(uuid())
+  globalTrainingId String
+  contractId       String
+
+  nameAlias String? // ชื่อที่ใช้ใน Excel ของ client นี้
+
+  completionPeriodCode String? // B / A / A1 / A2 / S / O // Training completion timing from matrix
+
+  trainingStandardId String
+
+  globalTraining   GlobalTraining   @relation(fields: [globalTrainingId], references: [id])
+  contract         Contract         @relation(fields: [contractId], references: [id])
+  trainingStandard TrainingStandard @relation(fields: [trainingStandardId], references: [id])
+
+  requirements      PositionRequirement[]
+  employeeTrainings EmployeeTraining[]    @relation("ClientTrainingRecord")
+
+  @@unique([globalTrainingId, contractId])
+}
+
+// ─────────────────────────────────────────────────────────
+// POSITION REQUIREMENT (Training Matrix)
+// Position X ต้องการ ClientTraining Z ใน Contract Y
+//
+// requirementType — symbol จริงจาก matrix Excel:
+//   mandatory (M) — Erawan: บังคับทุกคน
+//   relevant  (R) — Erawan: เฉพาะผู้เกี่ยวข้อง
+//   required  (X) — Chevron minimum, PTT, Valeura
+//   assigned  (O) — Chevron: required as assigned by company
+//
+// sourceMatrixCode  — symbol ดิบจาก Excel ("M","R","X","O") — audit
+// sourceMatrixSheet — ชื่อ sheet/version ที่ import มา — debug
+// ─────────────────────────────────────────────────────────
+
+model PositionRequirement {
+  id               String @id @default(uuid())
+  positionId       String
+  clientTrainingId String
+  contractId       String
+
+  requirementType   RequirementType // แทน requirementLevel เดิม
+  sourceMatrixCode  String? // symbol ดิบจาก Excel: "M","R","X","O"
+  sourceMatrixSheet String? // "Chevron Matrix 2025(14-11-25)" / "Erawan Rev15"
+
+  position       Position       @relation(fields: [positionId], references: [id])
+  clientTraining ClientTraining @relation(fields: [clientTrainingId], references: [id])
+  contract       Contract       @relation(fields: [contractId], references: [id])
+
+  @@unique([positionId, clientTrainingId, contractId])
+}
+
+// ─────────────────────────────────────────────────────────
+// MEDICAL REQUIREMENT (per client)
+// ─────────────────────────────────────────────────────────
+
+model MedicalRequirement {
+  id           String @id @default(uuid())
+  clientId     String
+  name         String // "Medical Check up (Chevron) 1 YEAR"
+  validityDays Int
+
+  client        Client         @relation(fields: [clientId], references: [id])
+  checks        MedicalCheck[]
+  candidateGaps CandidateGap[] // FIX A: FK จาก CandidateGap
+
+  @@unique([clientId, name])
+}
+
+// ─────────────────────────────────────────────────────────
+// FIX 2 + FIX C: EMPLOYEE TRAINING RECORD
+// unique = employeeId + globalTrainingId + contractId + version
+// isLatest = true → record ที่ใช้งานจริง
+// isLatest = false → history (audit trail)
+// ─────────────────────────────────────────────────────────
+
+model EmployeeTraining {
+  id               String  @id @default(uuid())
+  employeeId       String
+  globalTrainingId String
+  contractId       String? // null = record ทั่วไป ไม่ผูก contract
+  clientTrainingId String? // อ้างอิง ClientTraining (optional)
+
+  completedDate DateTime?
+  expiryDate    DateTime?
+  remindDate    DateTime?
+  remindDays    Int? // วันที่เหลือ (จาก Excel)
+
+  status     TrainingStatus @default(pending)
+  source     String? // "excel_import" / "manual" / "hr_system"
+  sourceFile String? // ชื่อไฟล์ Excel
+
+  // FIX C: version history — ไม่ลบ record เก่า แต่ mark isLatest = false
+  // เมื่อ update cert ใหม่ → สร้าง record ใหม่ version+1, isLatest=true
+  //                        → record เก่า isLatest=false (ยังอยู่ใน DB)
+  version  Int     @default(1)
+  isLatest Boolean @default(true) // query ปกติ filter isLatest=true เสมอ
+
+  employee       Employee        @relation(fields: [employeeId], references: [id])
+  globalTraining GlobalTraining  @relation(fields: [globalTrainingId], references: [id])
+  clientTraining ClientTraining? @relation("ClientTrainingRecord", fields: [clientTrainingId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // unique ต่อ version — ทำให้ history ไม่ชนกัน
+  @@unique([employeeId, globalTrainingId, contractId, version])
+  // index เพื่อ query เร็ว (filter isLatest=true บ่อย)
+  @@index([employeeId, globalTrainingId, isLatest])
+  @@index([expiryDate, isLatest]) // สำหรับ cert alert / due_soon query
+}
+
+// ─────────────────────────────────────────────────────────
+// MEDICAL CHECK
+// ─────────────────────────────────────────────────────────
+
+model MedicalCheck {
+  id                   String  @id @default(uuid())
+  employeeId           String
+  medicalRequirementId String? // FK → MedicalRequirement
+
+  checkType  String // "Medical Check up" / "Confined Space Entry"
+  hospital   String?
+  issuedDate DateTime?
+  expiryDate DateTime?
+  remindDate DateTime?
+  remindDays Int?
+  status     CheckStatus @default(pending)
+
+  employee           Employee            @relation(fields: [employeeId], references: [id])
+  medicalRequirement MedicalRequirement? @relation(fields: [medicalRequirementId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([employeeId, checkType, medicalRequirementId])
+}
+
+// ─────────────────────────────────────────────────────────
+// SAFETY CHECK
+// ─────────────────────────────────────────────────────────
+
+model SafetyCheck {
+  id         String      @id @default(uuid())
+  employeeId String
+  requestId  String?
+  status     CheckStatus @default(pending)
+  notes      String?
+
+  employee  Employee @relation(fields: [employeeId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// SKILL
+// ─────────────────────────────────────────────────────────
+
+model Skill {
+  id        String          @id @default(uuid())
+  name      String          @unique
+  employees EmployeeSkill[]
+}
+
+model EmployeeSkill {
+  id         String @id @default(uuid())
+  employeeId String
+  skillId    String
+  level      Int // 1-5
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+  skill    Skill    @relation(fields: [skillId], references: [id])
+
+  @@unique([employeeId, skillId])
+}
+
+// ─────────────────────────────────────────────────────────
+// PROJECT (ผูกกับ Contract — ไม่ใช่ Client โดยตรง)
+// ─────────────────────────────────────────────────────────
+
+model Project {
+  id         String   @id @default(uuid())
+  name       String
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+
+  isOffshore Boolean   @default(false)
+  startDate  DateTime?
+  endDate    DateTime?
+
+  requests    ManpowerRequest[]
+  assignments Assignment[]
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// MANPOWER REQUEST
+// ─────────────────────────────────────────────────────────
+
+model ManpowerRequest {
+  id String @id @default(uuid())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
+
+  positionId String
+  position   Position @relation(fields: [positionId], references: [id])
+
+  quantity Int
+
+  startDate  DateTime?
+  endDate    DateTime?
+  isOffshore Boolean   @default(false)
+
+  selectionMode SelectionMode @default(manual)
+  status        RequestStatus @default(draft)
+
+  requestedById String
+  requestedBy   User   @relation("UserRequests", fields: [requestedById], references: [id])
+
+  rounds                CandidateRound[]
+  bookings              Booking[]
+  clientApproval        ClientApproval[]
+  sseRecords            SSERecord[] // ADD 1
+  subcontractorRequests SubcontractorRequest[] // ADD 2
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// ROUND SYSTEM
+// ─────────────────────────────────────────────────────────
+
+model CandidateRound {
+  id        String @id @default(uuid())
+  requestId String
+  round     Int
+
+  request    ManpowerRequest @relation(fields: [requestId], references: [id])
+  candidates Candidate[]
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// CANDIDATE + FIX 5: CANDIDATE GAP (explainable matching)
+// ─────────────────────────────────────────────────────────
+
+model Candidate {
+  id         String @id @default(uuid())
+  roundId    String
+  employeeId String
+
+  sourceType String
+  status     MatchStatus @default(proposed)
+
+  // FIX B: ย้าย score ออกไป CandidateScore แทน
+  // totalScore และ matchPct คำนวณจาก score breakdown
+  totalScore Int // sum ของทุก score component
+  matchPct   Float? // % cert match รวม (Module 1)
+
+  round    CandidateRound  @relation(fields: [roundId], references: [id])
+  employee Employee        @relation(fields: [employeeId], references: [id])
+  decision ClientApproval?
+  gaps     CandidateGap[]
+  score    CandidateScore? // FIX B: score breakdown
+}
+
+// FIX B: Score breakdown — แยกคะแนนแต่ละด้านออกมา
+model CandidateScore {
+  id          String @id @default(uuid())
+  candidateId String @unique
+
+  certScore         Int @default(0) // training match score (0-100)
+  medicalScore      Int @default(0) // medical fitness score (0-100)
+  experienceScore   Int @default(0) // experience score (0-100)
+  availabilityScore Int @default(0) // availability score (0-100)
+
+  // default: cert 50% + medical 30% + experience 10% + availability 10%
+  totalScore Int @default(0)
+
+  computedAt DateTime @default(now())
+
+  candidate Candidate @relation(fields: [candidateId], references: [id])
+}
+
+// FIX 5 + FIX A: CandidateGap — explainable matching
+model CandidateGap {
+  id          String    @id @default(uuid())
+  candidateId String
+  gapType     GapType // training / medical
+  status      GapStatus // passed / missing / overdue / due_soon
+
+  globalTrainingId     String?
+  medicalRequirementId String?
+
+  itemName     String // "BOSIET" / "Medical Check up (Chevron)" — snapshot
+  itemCategory String? // "offshore" / "medical"
+
+  globalTraining     GlobalTraining?     @relation(fields: [globalTrainingId], references: [id])
+  medicalRequirement MedicalRequirement? @relation(fields: [medicalRequirementId], references: [id])
+  candidate          Candidate           @relation(fields: [candidateId], references: [id])
+}
+
+// ─────────────────────────────────────────────────────────
+// CUSTOMER DECISION
+// ─────────────────────────────────────────────────────────
+
+model ClientApproval {
+  id          String  @id @default(uuid())
+  candidateId String  @unique
+  requestId   String
+  decidedById String?
+  status      String
+  comment     String?
+
+  candidate Candidate       @relation(fields: [candidateId], references: [id])
+  request   ManpowerRequest @relation(fields: [requestId], references: [id])
+  user      User?           @relation(fields: [decidedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// BOOKING → ASSIGNMENT
+// ─────────────────────────────────────────────────────────
+
+model Booking {
+  id         String  @id @default(uuid())
+  requestId  String
+  employeeId String
+  status     String // pending / approved / deployed
+  approvedBy String?
+
+  request           ManpowerRequest    @relation(fields: [requestId], references: [id])
+  employee          Employee           @relation(fields: [employeeId], references: [id])
+  assignment        Assignment?
+  mobilizationTasks MobilizationTask[] // ADD 3
+
+  createdAt DateTime @default(now())
+}
+
+model Assignment {
+  id         String           @id @default(uuid())
+  bookingId  String           @unique
+  employeeId String
+  projectId  String
+  status     AssignmentStatus
+
+  booking  Booking  @relation(fields: [bookingId], references: [id])
+  employee Employee @relation(fields: [employeeId], references: [id])
+  project  Project  @relation(fields: [projectId], references: [id])
+}
+
+// ─────────────────────────────────────────────────────────
+// WORKFLOW LOG
+// ─────────────────────────────────────────────────────────
+
+model WorkflowLog {
+  id        String  @id @default(uuid())
+  requestId String
+  userId    String?
+  action    String
+  comment   String?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────
+// ADD 1: SSE RECORD
+// ─────────────────────────────────────────────────────────
+
+model SSERecord {
+  id        String @id @default(uuid())
+  requestId String
+
+  round Int @default(1) // Fix 1: รองรับ resubmit
+
+  totalSSE     Int
+  onboardCount Int
+  onboardPct   Float
+
+  documentNotes String?
+  submittedById String?
+  submittedAt   DateTime @default(now())
+
+  request ManpowerRequest @relation(fields: [requestId], references: [id])
+
+  @@unique([requestId, round])
+  @@index([requestId])
+}
+
+// ─────────────────────────────────────────────────────────
+// ADD 2: SUBCONTRACTOR
+// ─────────────────────────────────────────────────────────
+
+model Subcontractor {
+  id           String  @id @default(uuid())
+  name         String
+  contactName  String?
+  contactTel   String?
+  contactEmail String?
+
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
+  isActive Boolean @default(true)
+  notes    String?
+
+  requests SubcontractorRequest[]
+
+  createdAt DateTime @default(now())
+}
+
+model SubcontractorRequest {
+  id              String @id @default(uuid())
+  requestId       String
+  subcontractorId String
+  positionId      String
+  quantity        Int
+
+  status SubRequestStatus @default(inquiring)
+
+  quoteSentAt     DateTime?
+  quoteReceivedAt DateTime?
+  quotedPrice     Float?
+  quoteCurrency   String?   @default("THB")
+
+  sseReviewedAt   DateTime?
+  sseReviewedById String?
+  sseReviewNotes  String?
+
+  signedOffAt   DateTime?
+  signedOffById String?
+
+  hires SubcontractorHire[]
+
+  cancelReason String?
+
+  manpowerRequest ManpowerRequest @relation(fields: [requestId], references: [id])
+  subcontractor   Subcontractor   @relation(fields: [subcontractorId], references: [id])
+  position        Position        @relation(fields: [positionId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([requestId])
+  @@index([subcontractorId])
+}
+
+// Fix 2: junction table แทน hiredEmployeeIds String[]
+model SubcontractorHire {
+  id                     String @id @default(uuid())
+  subcontractorRequestId String
+  employeeId             String
+
+  startDate DateTime?
+  notes     String?
+
+  subcontractorRequest SubcontractorRequest @relation(fields: [subcontractorRequestId], references: [id])
+  employee             Employee             @relation(fields: [employeeId], references: [id])
+
+  @@unique([subcontractorRequestId, employeeId])
+}
+
+// ─────────────────────────────────────────────────────────
+// ADD 3: MOBILIZATION TASK
+// ─────────────────────────────────────────────────────────
+
+model MobilizationTask {
+  id        String @id @default(uuid())
+  bookingId String
+
+  taskType MobilizationTaskType
+  status   MobilizationTaskStatus @default(pending)
+
+  notes       String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  completedBy String?
+
+  vesselName     String?
+  departureDate  DateTime?
+  transportType  String?
+  pickupLocation String?
+  hotelName      String?
+  checkInDate    DateTime?
+  checkOutDate   DateTime?
+  lineGroupName  String?
+  lineGroupUrl   String?
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([bookingId])
+  @@index([taskType, status])
+}
