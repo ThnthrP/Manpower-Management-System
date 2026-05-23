@@ -108,6 +108,16 @@ async function seedGlobalTrainings() {
 
     "Safety Orientation - Incident Reporting, BBS, HazOb, SWC",
 
+    // Chevron - add from matrix - emp
+
+    "Control of Work Training (CoW)",
+
+    "Helicopter Fire Fighting",
+
+    "R550 Device Operation",
+
+    "Basic Rigging (by Settapat)",
+
     // ======================================================
     // Erawan
     // ======================================================

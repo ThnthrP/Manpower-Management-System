@@ -1,259 +1,187 @@
+import xlsx from "xlsx";
+import path from "path";
+import { fileURLToPath } from "url";
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function createClientTraining(
-  contractCode,
-  trainingName,
-  completionPeriodCode = null,
-  nameAlias = null,
-) {
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// const FILE_PATH = path.join(
+//   __dirname,
+//   "../../../training_record_from_hr/importErawan.xlsx",
+// );
+
+const FILE_PATH = path.join(
+  __dirname,
+  "../../../../training_record_from_hr/importErawan.xlsx",
+);
+
+async function seedClientTrainings() {
+  console.log("🚀 Seeding Client Trainings...");
+
+  const CONTRACT_CODE = "ER-2026";
+
   // ======================================================
   // Contract
   // ======================================================
 
   const contract = await prisma.contract.findFirst({
     where: {
-      contractNo: contractCode,
+      contractNo: CONTRACT_CODE,
     },
   });
 
   if (!contract) {
-    throw new Error(`❌ Contract not found: ${contractCode}`);
+    throw new Error(`Contract not found: ${CONTRACT_CODE}`);
   }
 
   // ======================================================
-  // Global Training
+  // Read Excel
   // ======================================================
 
-  const globalTraining = await prisma.globalTraining.findFirst({
-    where: {
-      name: trainingName,
-    },
+  const workbook = xlsx.readFile(FILE_PATH);
+
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+  const rows = xlsx.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: "",
   });
 
-  if (!globalTraining) {
-    throw new Error(`❌ Global training not found: ${trainingName}`);
-  }
-
   // ======================================================
-  // Training Standard
+  // Skip Header
   // ======================================================
 
-  const trainingStandard = await prisma.trainingStandard.findFirst({
-    where: {
-      globalTrainingId: globalTraining.id,
-    },
-  });
+  const dataRows = rows.slice(1);
 
-  if (!trainingStandard) {
-    throw new Error(`❌ Training standard not found: ${trainingName}`);
-  }
+  let inserted = 0;
+  let skipped = 0;
 
   // ======================================================
-  // Upsert
+  // Loop
   // ======================================================
 
-  await prisma.clientTraining.upsert({
-    where: {
-      globalTrainingId_contractId: {
-        globalTrainingId: globalTraining.id,
-        contractId: contract.id,
-      },
-    },
-
-    update: {
-      completionPeriodCode,
-      nameAlias,
-      trainingStandardId: trainingStandard.id,
-    },
-
-    create: {
-      globalTrainingId: globalTraining.id,
-      contractId: contract.id,
-
-      completionPeriodCode,
-      nameAlias,
-
-      trainingStandardId: trainingStandard.id,
-    },
-  });
-
-  console.log(`✔ ${trainingName}`);
-}
-
-async function seedErawanClientTrainings() {
-  console.log("🚀 Seeding Erawan Client Trainings...");
-
-  const CONTRACT_CODE = "ER-2026";
-
-  const TRAININGS = [
-    // ======================================================
-    // Erawan
-    // ======================================================
-
-    ["Site SSHE Induction"],
-
-    ["Basic Fire Fighting"],
-
-    ["First Aid Basic"],
-
-    ["Basic Safety Observation Card (BBS)"],
-
-    ["Fundamental Risk Assessment & Job Safety Analysis (JSA)"],
-
-    ["Permit to Work (PTW)"],
-
-    ["Waste Management / Additional Mandatory"],
-
-    ["Incident Investigation & Root Cause Analysis"],
-
-    ["High Pressure Gas Cylinder Handling"],
-
-    ["Authorized Gas Tester"],
-
-    ["Arsenic, Benzene, Hydrogen Sulfide & Mercury Awareness"],
-
-    ["Flanged Joint Management"],
-
-    ["Advanced Scaffolding"],
-
-    ["Rigging, Slinging & Banksman"],
-
-    ["Basic Working at Height & Rescue"],
-
-    ["Blaster and Painter"],
-
-    ["Painting Certificate Level 1"],
-
-    ["Painting Certificate Level 2"],
-
-    ["Basic Hazardous Area Classification"],
-
-    ["Advanced Hazardous Area Classification"],
-
-    ["Basic Electrical Safety"],
-
-    ["Machine and Electrical Work Safety"],
-
-    ["Tubing Installation Certification (SWAGELOK & Parker)"],
-
-    ["Tubing Installation Certification (Parker)"],
-
-    ["Pressure Testing"],
-
-    ["ASME IX (Piping)"],
-
-    ["AWS D1.1 (Structure)"],
-
-    ["API 1104 (Pipeline)"],
-
-    ["Welding Inspector"],
-
-    ["Rigging & Slinging by TPTI"],
-
-    ["Safe Lifting Operation Level 1"],
-
-    ["Crane Operator License by PTTEP"],
-
-    ["Basic Offshore Crane Operator"],
-
-    ["Crane Operator (4 roles)"],
-
-    ["Drops Awareness"],
-
-    ["Hand and Power Tool Safety"],
-
-    ["Manual Handling & Lifting"],
-
-    ["Security Awareness"],
-
-    ["SSHE Leadership"],
-
-    ["Fatigue Management"],
-
-    ["Process Safety Awareness"],
-
-    ["Health & Hygiene Inspections"],
-
-    ["Management of Change (MOC) Awareness"],
-
-    ["Chemical Safety Management"],
-
-    ["Oxygen-Fuel Gas Welding & Cutting"],
-
-    ["Explosive & Flammable Chemicals"],
-
-    ["Rope Access Level 1"],
-
-    ["Lockout/Tagout (LOTO)"],
-
-    ["Incident Management & Basic Incident Investigation"],
-
-    ["Confined Space Entry & Breathing Apparatus"],
-
-    ["Radiation Safety Officer Level 1 / G: 16"],
-
-    ["Helicopter Pre-Fight Briefing / G: 23"],
-
-    ["Intensive First Aid / G: 28"],
-
-    ["Load Secure and Safe Latching / G: 31"],
-
-    ["Advance Safety Observation Card / Additional Mandatory"],
-
-    ["Safe Handling of dangerous goods and / Additional Mandatory chemicals"],
-
-    ["Load securing and latching / Additional Mandatory"],
-
-    ["API, ASTM, AWS, ASME"],
-
-    ["API, ASME, AWS"],
-
-    ["API /AWS / ASME"],
-
-    ["WPS"],
-
-    ["Knowledge NDT methods"],
-
-    ["PLC (Programmable Controller)"],
-
-    ["Pneumatic"],
-
-    ["PCN RI - Retest"],
-
-    ["Occupational Safety Officer at Supervisory Level"],
-
-    ["Occupational Safety Officer at Professional Level"],
-
-    ["Basic Scaffolding"],
-
-    ["Scaffolding Inspector"],
-
-    ["Basic Crane Operator (Comply with API RP2D or equivalent)"],
-
-    ["T-BOSIET"],
-
-    ["Fire Watch"],
-  ];
-
-  for (const [trainingName, completionPeriodCode, nameAlias] of TRAININGS) {
+  for (let rowIndex = 0; rowIndex < dataRows.length; rowIndex++) {
     try {
-      await createClientTraining(
-        CONTRACT_CODE,
-        trainingName,
-        completionPeriodCode,
-        nameAlias,
-      );
+      const row = dataRows[rowIndex];
+
+      // ==================================================
+      // Excel Columns
+      // A = GlobalTraining
+      // B = ClientTraining
+      // ==================================================
+
+      // const globalName = String(row[0] || "").trim();
+      const globalName = String(row[0] || "")
+        .replace(/\r?\n|\r/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // const clientName = String(row[1] || "").trim();
+      const clientName = String(row[1] || "")
+        .replace(/\r?\n|\r/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // ==================================================
+      // Empty Row
+      // ==================================================
+
+      if (!globalName || !clientName) {
+        skipped++;
+
+        continue;
+      }
+
+      // ==================================================
+      // Global Training
+      // ==================================================
+
+      const globalTraining = await prisma.globalTraining.findFirst({
+        where: {
+          name: globalName,
+        },
+      });
+
+      if (!globalTraining) {
+        console.log(`⚠ Global training not found: ${globalName}`);
+
+        skipped++;
+
+        continue;
+      }
+
+      // ==================================================
+      // Training Standard
+      // ==================================================
+
+      const trainingStandard = await prisma.trainingStandard.findFirst({
+        where: {
+          globalTrainingId: globalTraining.id,
+        },
+      });
+
+      if (!trainingStandard) {
+        console.log(`⚠ Training standard not found: ${globalName}`);
+
+        skipped++;
+
+        continue;
+      }
+
+      // ==================================================
+      // Upsert Client Training
+      // ==================================================
+
+      await prisma.clientTraining.upsert({
+        where: {
+          contractId_name: {
+            contractId: contract.id,
+
+            name: clientName,
+          },
+        },
+
+        update: {
+          globalTrainingId: globalTraining.id,
+
+          trainingStandardId: trainingStandard.id,
+        },
+
+        create: {
+          contractId: contract.id,
+
+          name: clientName,
+
+          globalTrainingId: globalTraining.id,
+
+          trainingStandardId: trainingStandard.id,
+        },
+      });
+
+      inserted++;
+
+      console.log(`✔ ${clientName} -> ${globalName}`);
     } catch (err) {
-      console.error(`❌ ${trainingName}: ${err.message}`);
+      skipped++;
+
+      console.error(`❌ Row ${rowIndex + 2}: ${err.message}`);
     }
   }
 
-  console.log("✅ Done seeding Erawan Client Trainings");
+  // ======================================================
+  // Summary
+  // ======================================================
+
+  console.log("\n================================");
+  console.log("✅ Client Training Seed Completed");
+  console.log(`✔ Inserted: ${inserted}`);
+  console.log(`⚠ Skipped: ${skipped}`);
 }
 
-seedErawanClientTrainings()
+seedClientTrainings()
   .catch((err) => {
     console.error("💥 Seed failed:", err);
   })

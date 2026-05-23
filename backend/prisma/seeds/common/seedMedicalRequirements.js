@@ -15,8 +15,42 @@ async function seedMedicalRequirements() {
     },
   });
 
+  const chevron = await prisma.client.findUnique({
+    where: {
+      code: "CHEVRON",
+    },
+  });
+
+  const ptt = await prisma.client.findUnique({
+    where: {
+      code: "PTT",
+    },
+  });
+
+  const valeura = await prisma.client.findUnique({
+    where: {
+      code: "VALEURA",
+    },
+  });
+
+  // ======================================================
+  // Validate
+  // ======================================================
+
   if (!erawan) {
     throw new Error("Client not found: ERAWAN");
+  }
+
+  if (!chevron) {
+    throw new Error("Client not found: CHEVRON");
+  }
+
+  if (!ptt) {
+    throw new Error("Client not found: PTT");
+  }
+
+  if (!valeura) {
+    throw new Error("Client not found: VALEURA");
   }
 
   // ======================================================
@@ -24,6 +58,10 @@ async function seedMedicalRequirements() {
   // ======================================================
 
   const REQUIREMENTS = [
+    // ====================================================
+    // Erawan
+    // ====================================================
+
     {
       clientId: erawan.id,
       name: "Medical Check",
@@ -32,6 +70,54 @@ async function seedMedicalRequirements() {
 
     {
       clientId: erawan.id,
+      name: "Confined Space Entry",
+      validityDays: 365,
+    },
+
+    // ====================================================
+    // Chevron
+    // ====================================================
+
+    {
+      clientId: chevron.id,
+      name: "Medical Check",
+      validityDays: 365,
+    },
+
+    {
+      clientId: chevron.id,
+      name: "Confined Space Entry",
+      validityDays: 365,
+    },
+
+    // ====================================================
+    // PTT
+    // ====================================================
+
+    {
+      clientId: ptt.id,
+      name: "Medical Check",
+      validityDays: 365,
+    },
+
+    {
+      clientId: ptt.id,
+      name: "Confined Space Entry",
+      validityDays: 365,
+    },
+
+    // ====================================================
+    // Valeura
+    // ====================================================
+
+    {
+      clientId: valeura.id,
+      name: "Medical Check",
+      validityDays: 365,
+    },
+
+    {
+      clientId: valeura.id,
       name: "Confined Space Entry",
       validityDays: 365,
     },
@@ -57,7 +143,7 @@ async function seedMedicalRequirements() {
       create: req,
     });
 
-    console.log(`✔ ${req.name}`);
+    console.log(`✔ ${req.name} (${req.clientId})`);
   }
 
   console.log("✅ Done seeding Medical Requirements");

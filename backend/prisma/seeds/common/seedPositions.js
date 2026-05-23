@@ -33,25 +33,60 @@ async function seedPositions() {
 
     "Scaffolding Subject Matter Expertise (SME)",
 
-    "Welder - Alloy",
-    "Welder - Regular",
+    // "Welder - Alloy", -> "Welder, Alloy"
+    // "Welder - Regular", -> "Welder, Regular"
 
     "Rigger / Scaffolder",
 
     "QC Level I (NDE)",
 
-    "Safety Officer / HES Specialist",
+    // "Safety Officer / HES Specialist", -> "Safety Officer / HES specialist",
 
-    "Crane Mechanic Technician",
-    "Materials Controller Technician",
+    "Crane Mechanic, Technician",
+    "Materials Controller, Technician",
 
     "Helper / General Maintenance",
 
-    "CPP Crane Operator - Class A",
+    // "CPP Crane Operator - Class A", -> "CPP Crane Operator, Class A",
     "CPP Crane Operator - Class B+",
     "CPP Crane Assistant",
 
     "Painter / Scaffolder",
+
+    // Chevron - add from matrix
+
+    "Welder, Regular",
+    "Welder, Alloy",
+
+    "Construction Supervisor (Mech)",
+
+    "Crane Team Lead, Class A, Class B and B+ (Certify by Company)",
+
+    "Crane Operator, Class A",
+    "Crane Operator, Class A (Certify by Company)",
+    "Crane Operator, Class B and B+ (Certify by Company)",
+    "Crane Operator or Crane Coordinator or Crane Team lead,Class A (Certify by Company)",
+    "Crane Operator or Crane Coordinator or Crane Team lead, Class B and B+ (Certify by Company)",
+    "Crane Operator, Class C (Certify by Company)",
+
+    "CPP Crane Operator, Class A",
+    "CPP Crane Operator, Class A (Certify by Company)",
+    "CPP Crane Operator, Class B+ (Certify by Company)",
+
+    // "CPP Crane Assistant / Rigger / Scaffolder",
+    "CPP Crane Assistant",
+    "CPP Crane Assistant (Certify by Company)",
+    "CPP Crane Assistant, Class A (Certify by Company)",
+    "CPP Crane Assistant, Class B+ (Certify by Company)",
+
+    "Safety Officer / HES specialist",
+
+    "Rigger / Scaffolder + Rope Access Lead Level",
+
+    "Rigger / Scaffolder + Rope Access Technician Level",
+
+    // "Rigger/Scaffolder (Skill Mechanic)",
+    "Rigger / Scaffolder (Skill Mechanic)",
 
     // ======================================================
     // Erawan

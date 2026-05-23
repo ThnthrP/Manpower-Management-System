@@ -72,6 +72,7 @@ enum TrainingStatus {
 }
 
 enum TrainingSource {
+  COMPANY
   COMPANY_ELEARNING
   TPTI
   CONTRACTOR
@@ -360,24 +361,29 @@ model TrainingStandard {
 }
 
 model ClientTraining {
-  id               String @id @default(uuid())
+  id String @id @default(uuid())
+
   globalTrainingId String
-  contractId       String
+  contractId String
 
-  nameAlias String? // ชื่อที่ใช้ใน Excel ของ client นี้
+  name String
+  nameAlias String?
 
-  completionPeriodCode String? // B / A / A1 / A2 / S / O // Training completion timing from matrix
+  completionPeriodCode String?
 
   trainingStandardId String
 
-  globalTraining   GlobalTraining   @relation(fields: [globalTrainingId], references: [id])
-  contract         Contract         @relation(fields: [contractId], references: [id])
+  globalTraining GlobalTraining @relation(fields: [globalTrainingId], references: [id])
+
+  contract Contract @relation(fields: [contractId], references: [id])
+
   trainingStandard TrainingStandard @relation(fields: [trainingStandardId], references: [id])
 
-  requirements      PositionRequirement[]
-  employeeTrainings EmployeeTraining[]    @relation("ClientTrainingRecord")
+  requirements PositionRequirement[]
 
-  @@unique([globalTrainingId, contractId])
+  employeeTrainings EmployeeTraining[] @relation("ClientTrainingRecord")
+
+  @@unique([contractId, name])
 }
 
 // ─────────────────────────────────────────────────────────
@@ -436,39 +442,41 @@ model MedicalRequirement {
 // ─────────────────────────────────────────────────────────
 
 model EmployeeTraining {
-  id               String  @id @default(uuid())
-  employeeId       String
-  globalTrainingId String
-  contractId       String? // null = record ทั่วไป ไม่ผูก contract
-  clientTrainingId String? // อ้างอิง ClientTraining (optional)
+  id String @id @default(uuid())
+
+  employeeId String
+
+  globalTrainingId String?
+  rawTrainingName String
+
+  contractId String?
+  clientTrainingId String?
 
   completedDate DateTime?
-  expiryDate    DateTime?
-  remindDate    DateTime?
-  remindDays    Int? // วันที่เหลือ (จาก Excel)
+  expiryDate DateTime?
 
-  status     TrainingStatus @default(pending)
-  source     String? // "excel_import" / "manual" / "hr_system"
-  sourceFile String? // ชื่อไฟล์ Excel
+  remindDate DateTime?
+  remindDays Int?
 
-  // FIX C: version history — ไม่ลบ record เก่า แต่ mark isLatest = false
-  // เมื่อ update cert ใหม่ → สร้าง record ใหม่ version+1, isLatest=true
-  //                        → record เก่า isLatest=false (ยังอยู่ใน DB)
-  version  Int     @default(1)
-  isLatest Boolean @default(true) // query ปกติ filter isLatest=true เสมอ
+  status TrainingStatus @default(pending)
 
-  employee       Employee        @relation(fields: [employeeId], references: [id])
-  globalTraining GlobalTraining  @relation(fields: [globalTrainingId], references: [id])
+  source String?
+  sourceFile String?
+
+  version Int @default(1)
+  isLatest Boolean @default(true)
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  globalTraining GlobalTraining? @relation(fields: [globalTrainingId], references: [id])
+
   clientTraining ClientTraining? @relation("ClientTrainingRecord", fields: [clientTrainingId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // unique ต่อ version — ทำให้ history ไม่ชนกัน
-  @@unique([employeeId, globalTrainingId, contractId, version])
-  // index เพื่อ query เร็ว (filter isLatest=true บ่อย)
   @@index([employeeId, globalTrainingId, isLatest])
-  @@index([expiryDate, isLatest]) // สำหรับ cert alert / due_soon query
+  @@index([expiryDate, isLatest])
 }
 
 // ─────────────────────────────────────────────────────────
