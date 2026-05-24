@@ -16,12 +16,12 @@ export const CES_MENU = [
   },
 
   {
-    section: "PHASE 1 — ONBOARDING",
+    section: "PHASE 1 — ONBOARDING (HR)",
     items: [
-      // HR ดูแล employee, training, cert
-      { name: "Workers",        path: "/admin/workers",         roles: ["admin", "hr", "manpower"] },
-      { name: "Training Matrix",path: "/admin/training-matrix", roles: ["admin", "hr", "manpower", "expert"] },
-      { name: "Certifications", path: "/admin/certifications",  roles: ["admin", "hr", "manpower"] },
+      { name: "Workers",             path: "/admin/workers",              roles: ["admin", "hr", "manpower"] },
+      { name: "Certifications",      path: "/admin/certifications",       roles: ["admin", "hr", "manpower"] },
+      { name: "Passports",           path: "/admin/passports",            roles: ["admin", "hr", "manpower"] },
+      { name: "Training Matrix",     path: "/admin/training-matrix",      roles: ["admin", "hr", "manpower", "expert"] },
     ],
   },
 
@@ -99,11 +99,12 @@ export const YARD2_MENU = [
   },
 
   {
-    section: "PHASE 1 — EMPLOYEE DATA",
+    section: "PHASE 1 — EMPLOYEE DATA (HR)",
     items: [
-      { name: "Workers",            path: "/admin/workers",          roles: ["admin", "hr", "manpower"] },
-      { name: "Certifications",     path: "/admin/certifications",   roles: ["admin", "hr", "manpower"] },
-      { name: "Training Matrix",    path: "/admin/training-matrix",  roles: ["admin", "hr", "manpower"] },
+      { name: "Workers",             path: "/admin/workers",              roles: ["admin", "hr", "manpower"] },
+      { name: "Certifications",      path: "/admin/certifications",       roles: ["admin", "hr", "manpower"] },
+      { name: "Passports",           path: "/admin/passports",            roles: ["admin", "hr", "manpower"] },
+      { name: "Training Matrix",     path: "/admin/training-matrix",      roles: ["admin", "hr", "manpower"] },
     ],
   },
 
@@ -173,13 +174,12 @@ export const EXPERT_MENU = [
   },
 
   {
-    section: "PHASE 1 — ONBOARDING",
+    section: "PHASE 1 — ONBOARDING (HR)",
     items: [
-      // matching CV, Cert, Passport จาก flowchart
-      { name: "Workers",         path: "/admin/workers",            roles: ["admin", "hr", "manpower"] },
-      { name: "Certifications",  path: "/admin/certifications",     roles: ["admin", "hr", "manpower"] },
-      // training matrix แยกตามลูกค้าและแผนก (จาก meeting notes)
-      { name: "Training Matrix", path: "/admin/training-matrix",    roles: ["admin", "hr", "manpower", "expert"] },
+      { name: "Workers",             path: "/admin/workers",              roles: ["admin", "hr", "manpower"] },
+      { name: "Certifications",      path: "/admin/certifications",       roles: ["admin", "hr", "manpower"] },
+      { name: "Passports",           path: "/admin/passports",            roles: ["admin", "hr", "manpower"] },
+      { name: "Training Matrix",     path: "/admin/training-matrix",      roles: ["admin", "hr", "manpower", "expert"] },
     ],
   },
 
