@@ -14,8 +14,9 @@ import PeDashboard from "./dashboard/PeDashboard";
 // import ExpertDashboard from "./dashboard/ExpertDashboard";
 
 // Phase 1 — Employee Data (EXPERTEAM)
-import WorkerList    from "./employee/WorkerList";
-import WorkerDetail  from "./employee/WorkerDetail";
+import WorkerList     from "./employee/WorkerList";
+import WorkerDetail   from "./employee/WorkerDetail";
+import AddWorker      from "./employee/AddWorker";
 import TrainingMatrix from "./training/TrainingMatrix";
 
 // shared page
@@ -78,6 +79,7 @@ const ExpertRouter = () => {
 
           {/* Phase 1 — Employee Data */}
           <Route path="workers" element={<ProtectedRoute allowRoles={["admin","hr","manpower"]}><WorkerList /></ProtectedRoute>} />
+          <Route path="workers/add" element={<ProtectedRoute allowRoles={["admin","hr"]}><AddWorker /></ProtectedRoute>} />
           <Route path="workers/:id" element={<ProtectedRoute allowRoles={["admin","hr","manpower","pe","pe_head"]}><WorkerDetail /></ProtectedRoute>} />
           <Route path="training-matrix" element={<ProtectedRoute allowRoles={["admin","hr","manpower","pe","pe_head"]}><TrainingMatrix /></ProtectedRoute>} />
 

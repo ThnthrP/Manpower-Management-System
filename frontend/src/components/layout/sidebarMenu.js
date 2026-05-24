@@ -20,7 +20,6 @@ export const CES_MENU = [
     items: [
       // HR ดูแล employee, training, cert
       { name: "Workers",        path: "/admin/workers",         roles: ["admin", "hr", "manpower"] },
-      { name: "Add Worker",     path: "/admin/workers/add",     roles: ["admin", "hr"] },
       { name: "Training Matrix",path: "/admin/training-matrix", roles: ["admin", "hr", "manpower", "expert"] },
       { name: "Certifications", path: "/admin/certifications",  roles: ["admin", "hr", "manpower"] },
     ],
@@ -178,7 +177,6 @@ export const EXPERT_MENU = [
     items: [
       // matching CV, Cert, Passport จาก flowchart
       { name: "Workers",         path: "/admin/workers",            roles: ["admin", "hr", "manpower"] },
-      { name: "Add Worker",      path: "/admin/workers/add",        roles: ["admin", "hr"] },
       { name: "Certifications",  path: "/admin/certifications",     roles: ["admin", "hr", "manpower"] },
       // training matrix แยกตามลูกค้าและแผนก (จาก meeting notes)
       { name: "Training Matrix", path: "/admin/training-matrix",    roles: ["admin", "hr", "manpower", "expert"] },

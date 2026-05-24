@@ -57,10 +57,7 @@ const TrainingMatrix = () => {
     <div className="p-6">
       {/* HEADER */}
       <div className="mb-6">
-        <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
-          Phase 1 — Employee Data
-        </span>
-        <h1 className="text-2xl font-bold text-gray-800 mt-1">Training Matrix</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Training Matrix</h1>
         <p className="text-gray-500 text-sm mt-1">
           Required certifications per position — offshore eligibility per client
         </p>

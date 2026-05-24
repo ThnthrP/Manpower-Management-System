@@ -59,14 +59,19 @@ const EmployeeList = () => {
   return (
     <div className="p-6">
       {/* HEADER */}
-      <div className="mb-6">
-        <span className="text-xs text-gray-500 uppercase tracking-wider font-semibold">
-          Phase 1 — Employee Data
-        </span>
-        <h1 className="text-2xl font-bold text-gray-800 mt-1">Workers</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          รายชื่อพนักงานทั้งหมดในบริษัท — {total} คน
-        </p>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Workers</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            รายชื่อพนักงานทั้งหมดในบริษัท — {total} คน
+          </p>
+        </div>
+        <button
+          onClick={() => navigate("/admin/workers/add")}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+        >
+          <span className="text-lg leading-none">+</span> Add Worker
+        </button>
       </div>
 
       {/* FILTERS */}
