@@ -1,11 +1,6 @@
 import { Route } from "react-router-dom";
 import ProtectedRoute from "../../components/ProtectedRoute";
 
-// Phase 1 — Employee Data
-import EmployeeList   from "../../pages/modules/employee/EmployeeList";
-import EmployeeDetail from "../../pages/modules/employee/EmployeeDetail";
-import TrainingMatrix from "../../pages/modules/training/TrainingMatrix";
-
 // Phase 2 — Request
 import RequestList   from "../../pages/modules/request/RequestList";
 import RequestCreate from "../../pages/modules/request/RequestCreate";
@@ -30,36 +25,6 @@ import EvaluationForm from "../../pages/modules/evaluation/EvaluationForm";
 import IntercompanyRequest from "../../pages/modules/intercompany/IntercompanyRequest";
 
 export const getSharedModuleRoutes = () => [
-  // ── Phase 1: Employee Data ──────────────────────────────────
-  <Route
-    key="workers"
-    path="workers"
-    element={
-      <ProtectedRoute allowRoles={["admin", "hr", "manpower"]}>
-        <EmployeeList />
-      </ProtectedRoute>
-    }
-  />,
-  <Route
-    key="worker-detail"
-    path="workers/:id"
-    element={
-      <ProtectedRoute allowRoles={["admin", "hr", "manpower", "pe", "pe_head"]}>
-        <EmployeeDetail />
-      </ProtectedRoute>
-    }
-  />,
-
-  <Route
-    key="training-matrix"
-    path="training-matrix"
-    element={
-      <ProtectedRoute allowRoles={["admin", "hr", "manpower", "pe", "pe_head"]}>
-        <TrainingMatrix />
-      </ProtectedRoute>
-    }
-  />,
-
   // ── Phase 2: Requests ───────────────────────────────────────
   <Route
     key="requests"

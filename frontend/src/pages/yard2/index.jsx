@@ -7,6 +7,11 @@ import ProtectedRoute from "../../components/ProtectedRoute";
 import AdminDashboard from "./dashboard/AdminDashboard";
 import PeDashboard from "./dashboard/PeDashboard";
 
+// Phase 1 — Employee Data (YARD2)
+import WorkerList    from "./employee/WorkerList";
+import WorkerDetail  from "./employee/WorkerDetail";
+import TrainingMatrix from "./training/TrainingMatrix";
+
 import AdminUsers from "../admin/AdminUsers";
 import { getSharedModuleRoutes } from "../../routes/shared/SharedModuleRoutes";
 
@@ -42,6 +47,11 @@ const Yard2Router = () => {
               </ProtectedRoute>
             }
           />
+
+          {/* Phase 1 — Employee Data */}
+          <Route path="workers" element={<ProtectedRoute allowRoles={["admin","hr","manpower"]}><WorkerList /></ProtectedRoute>} />
+          <Route path="workers/:id" element={<ProtectedRoute allowRoles={["admin","hr","manpower","pe","pe_head"]}><WorkerDetail /></ProtectedRoute>} />
+          <Route path="training-matrix" element={<ProtectedRoute allowRoles={["admin","hr","manpower","pe","pe_head"]}><TrainingMatrix /></ProtectedRoute>} />
 
           {getSharedModuleRoutes()}
         </Routes>

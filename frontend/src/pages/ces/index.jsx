@@ -13,6 +13,11 @@ import PeDashboard from "./dashboard/PeDashboard";
 // import NurseDashboard from "./dashboard/NurseDashboard";
 // import TaDashboard from "./dashboard/TaDashboard";
 
+// Phase 1 — Employee Data (CES)
+import WorkerList    from "./employee/WorkerList";
+import WorkerDetail  from "./employee/WorkerDetail";
+import TrainingMatrix from "./training/TrainingMatrix";
+
 // shared page
 import AdminUsers from "../admin/AdminUsers";
 import { getSharedModuleRoutes } from "../../routes/shared/SharedModuleRoutes";
@@ -72,6 +77,11 @@ const CesRouter = () => {
               </ProtectedRoute>
             }
           />
+
+          {/* Phase 1 — Employee Data */}
+          <Route path="workers" element={<ProtectedRoute allowRoles={["admin","hr","manpower"]}><WorkerList /></ProtectedRoute>} />
+          <Route path="workers/:id" element={<ProtectedRoute allowRoles={["admin","hr","manpower","pe","pe_head"]}><WorkerDetail /></ProtectedRoute>} />
+          <Route path="training-matrix" element={<ProtectedRoute allowRoles={["admin","hr","manpower","pe","pe_head"]}><TrainingMatrix /></ProtectedRoute>} />
 
           {getSharedModuleRoutes()}
         </Routes>
