@@ -88,6 +88,79 @@ export const CES_MENU = [
 ];
 
 // ─────────────────────────────────────────────
+// YARD2 MENU
+// flow: PE request → Manpower matching → SSE → Safety → Mob/Demob → Evaluation
+// ─────────────────────────────────────────────
+export const YARD2_MENU = [
+  {
+    section: "MAIN",
+    items: [
+      { name: "Dashboard", path: "/admin", icon: "dashboard" },
+    ],
+  },
+
+  {
+    section: "PHASE 1 — EMPLOYEE DATA",
+    items: [
+      { name: "Workers",            path: "/admin/workers",          roles: ["admin", "hr", "manpower"] },
+      { name: "Certifications",     path: "/admin/certifications",   roles: ["admin", "hr", "manpower"] },
+      { name: "Training Matrix",    path: "/admin/training-matrix",  roles: ["admin", "hr", "manpower"] },
+    ],
+  },
+
+  {
+    section: "PHASE 2 — REQUEST",
+    items: [
+      { name: "Create Request",     path: "/admin/requests/create",  roles: ["pe", "pe_head", "admin"] },
+      { name: "My Requests",        path: "/admin/requests",         roles: ["pe", "pe_head", "admin"] },
+      { name: "Manpower Queue",     path: "/admin/manpower-queue",   roles: ["manpower", "admin"] },
+      { name: "Candidate Pool",     path: "/admin/candidates",       roles: ["manpower", "admin"] },
+    ],
+  },
+
+  {
+    section: "PHASE 3 — ASSIGNMENT",
+    items: [
+      { name: "Assignments",        path: "/admin/assignments",      roles: ["admin", "manpower", "pe"] },
+      { name: "Manager Approval",   path: "/admin/approvals",        roles: ["admin", "manager"] },
+    ],
+  },
+
+  {
+    section: "PHASE 4 — SAFETY",
+    items: [
+      { name: "SSHE / Safety",      path: "/admin/safety",           roles: ["admin", "safety"] },
+      { name: "Client Review",      path: "/admin/client-review",    roles: ["admin", "safety", "manpower"] },
+      { name: "Pre-Offshore Check", path: "/admin/pre-offshore",     roles: ["admin", "safety"] },
+    ],
+  },
+
+  {
+    section: "PHASE 5 — MOB/DEMOB",
+    items: [
+      { name: "Mobilization",       path: "/admin/mobilization",     roles: ["admin", "manpower"] },
+      { name: "Demobilization",     path: "/admin/demobilization",   roles: ["admin", "manpower"] },
+      { name: "Evaluation",         path: "/admin/evaluation",       roles: ["admin", "pe", "pe_head"] },
+    ],
+  },
+
+  {
+    section: "INSIGHTS",
+    items: [
+      { name: "Analytics & Reports", path: "/admin/reports",         roles: ["admin", "manager"] },
+    ],
+  },
+
+  {
+    section: "SYSTEM",
+    items: [
+      { name: "User Management",    path: "/admin/users",            roles: ["admin"] },
+      { name: "Notifications",      path: "/admin/notifications",    roles: ["admin", "manpower"] },
+    ],
+  },
+];
+
+// ─────────────────────────────────────────────
 // EXPERT MENU
 // flow: User/PE request → MP matching (CV/Cert) → SSE review →
 //       TA → Supervisor interview → SSHE → booking → mobilization

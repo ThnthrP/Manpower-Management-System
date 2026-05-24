@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AppContent } from "../../context/AppContext";
-import { CES_MENU, EXPERT_MENU } from "./sidebarMenu";
+import { CES_MENU, EXPERT_MENU, YARD2_MENU } from "./sidebarMenu";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -25,6 +25,8 @@ const Sidebar = () => {
     menu = CES_MENU;
   } else if (company === "EXPERTEAM") {
     menu = EXPERT_MENU;
+  } else if (company === "YARD2") {
+    menu = YARD2_MENU;
   }
 
   // DEBUG
@@ -42,6 +44,9 @@ const Sidebar = () => {
           )}
           {company === "EXPERTEAM" && (
             <span className="text-purple-400">🔧 EXPERTEAM (Maintenance)</span>
+          )}
+          {company === "YARD2" && (
+            <span className="text-orange-400">⚓ YARD 2 (Operations)</span>
           )}
           {!company && <span className="text-red-400">No Company</span>}
         </div>

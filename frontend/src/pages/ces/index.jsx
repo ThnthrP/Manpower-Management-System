@@ -15,6 +15,7 @@ import PeDashboard from "./dashboard/PeDashboard";
 
 // shared page
 import AdminUsers from "../admin/AdminUsers";
+import { getSharedModuleRoutes } from "../../routes/shared/SharedModuleRoutes";
 
 const CesRouter = () => {
   const { userData } = useContext(AppContent);
@@ -61,10 +62,8 @@ const CesRouter = () => {
     <ProtectedRoute>
       <Layout company="CES">
         <Routes>
-          {/* /admin */}
           <Route path="/" element={getDashboard()} />
 
-          {/* /admin/users */}
           <Route
             path="users"
             element={
@@ -73,6 +72,8 @@ const CesRouter = () => {
               </ProtectedRoute>
             }
           />
+
+          {getSharedModuleRoutes()}
         </Routes>
       </Layout>
     </ProtectedRoute>

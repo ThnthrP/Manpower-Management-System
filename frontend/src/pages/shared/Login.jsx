@@ -6,6 +6,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import experteamLogo from "../../assets/experteam_logo.png";
 import cesLogo from "../../assets/ces_logo.png";
+import yard2Logo from "../../assets/yard2_logo.png";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,7 +20,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const company = localStorage.getItem("company");
-  const companyLogo = company === "CES" ? cesLogo : experteamLogo;
+  const companyLogo =
+    company === "CES" ? cesLogo :
+    company === "YARD2" ? yard2Logo :
+    experteamLogo;
 
   const onSubmitHandler = async (e) => {
     try {

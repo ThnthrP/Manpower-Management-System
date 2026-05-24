@@ -1,5 +1,5 @@
 // ============================================================
-// schema.prisma — MMS v5.2
+// schema.prisma — MMS v6.0
 // แก้ไขจาก v5.1:
 //   Fix: RequirementLevel (S/B/A/A1) → RequirementType (M/R/X/O)
 //        ตรงกับ symbol จริงใน Excel ของแต่ละ client
@@ -136,6 +136,45 @@ enum MobilizationTaskStatus {
   not_required
 }
 
+enum IntercompanyRequestStatus {
+  pending
+  approved
+  rejected
+  cancelled
+}
+
+enum TeamSubmissionStatus {
+  draft
+  submitted
+  pe_reviewing
+  approved
+  rejected
+  senior_review
+  finalized
+}
+
+enum PreOffshoreCheckResult {
+  pending
+  passed
+  failed
+}
+
+enum MobDemobStatus {
+  scheduled
+  confirmed
+  delayed
+  completed
+  cancelled
+}
+
+enum EvaluationRating {
+  excellent
+  good
+  satisfactory
+  needs_improvement
+  unsatisfactory
+}
+
 // ─────────────────────────────────────────────────────────
 // USER & RBAC
 // ─────────────────────────────────────────────────────────
@@ -158,6 +197,13 @@ model User {
   requests  ManpowerRequest[] @relation("UserRequests")
   logs      WorkflowLog[]
   decisions ClientApproval[]
+
+  // Phase 2-5
+  notifications    Notification[]
+  activityLogs     ActivityLog[]
+  evaluationsGiven EmployeeEvaluation[] @relation("EvaluatorUser")
+  managerApprovals ManagerApproval[]
+  seniorReviews    SeniorReview[]
 
   createdAt        DateTime  @default(now())
   resetOtp         String?
@@ -195,16 +241,20 @@ model RolePermission {
 // ─────────────────────────────────────────────────────────
 
 model Company {
-  id   String @id @default(uuid())
+  id String @id @default(uuid())
 
   name String @unique // "CES", "EXPERTEAM"
 
-  type String         // "main" / "subcontractor"
+  type String // "main" / "subcontractor"
 
   employees      Employee[]
   users          User[]
   clients        Client[]
   subcontractors Subcontractor[]
+  departments    Department[]
+
+  intercompanyBorrowing IntercompanyRequest[] @relation("BorrowingCompany")
+  intercompanyLending   IntercompanyRequest[] @relation("LendingCompany")
 }
 
 // ─────────────────────────────────────────────────────────
@@ -292,6 +342,9 @@ model Employee {
   companyId String?
   company   Company? @relation(fields: [companyId], references: [id])
 
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+
   user User?
 
   covidVac    String?
@@ -305,7 +358,14 @@ model Employee {
   candidates         Candidate[]
   assignments        Assignment[]
   bookings           Booking[]
-  subcontractorHires SubcontractorHire[] // Fix 2
+  subcontractorHires SubcontractorHire[]
+
+  // Phase 2-5 extended data
+  passport             EmployeePassport?
+  leaves               EmployeeLeave[]
+  cvProfile            EmployeeCVProfile?
+  evaluationsReceived  EmployeeEvaluation[]  @relation("EvaluationTarget")
+  intercompanyRequests IntercompanyRequest[] @relation("IntercompanyEmployee")
 
   createdAt DateTime @default(now())
 }
@@ -364,9 +424,9 @@ model ClientTraining {
   id String @id @default(uuid())
 
   globalTrainingId String
-  contractId String
+  contractId       String
 
-  name String
+  name      String
   nameAlias String?
 
   completionPeriodCode String?
@@ -447,23 +507,23 @@ model EmployeeTraining {
   employeeId String
 
   globalTrainingId String?
-  rawTrainingName String
+  rawTrainingName  String
 
-  contractId String?
+  contractId       String?
   clientTrainingId String?
 
   completedDate DateTime?
-  expiryDate DateTime?
+  expiryDate    DateTime?
 
   remindDate DateTime?
   remindDays Int?
 
   status TrainingStatus @default(pending)
 
-  source String?
+  source     String?
   sourceFile String?
 
-  version Int @default(1)
+  version  Int     @default(1)
   isLatest Boolean @default(true)
 
   employee Employee @relation(fields: [employeeId], references: [id])
@@ -590,8 +650,14 @@ model ManpowerRequest {
   rounds                CandidateRound[]
   bookings              Booking[]
   clientApproval        ClientApproval[]
-  sseRecords            SSERecord[] // ADD 1
-  subcontractorRequests SubcontractorRequest[] // ADD 2
+  sseRecords            SSERecord[]
+  subcontractorRequests SubcontractorRequest[]
+
+  // Phase 2-5
+  teamSubmissions      TeamSubmission[]
+  rejections           RequestRejection[]
+  seniorReview         SeniorReview?
+  intercompanyRequests IntercompanyRequest[]
 
   createdAt DateTime @default(now())
 }
@@ -719,6 +785,13 @@ model Assignment {
   booking  Booking  @relation(fields: [bookingId], references: [id])
   employee Employee @relation(fields: [employeeId], references: [id])
   project  Project  @relation(fields: [projectId], references: [id])
+
+  // Phase 3-5
+  managerApproval  ManagerApproval?
+  preOffshoreCheck PreOffshoreCheck?
+  mobilization     Mobilization?
+  demobilization   Demobilization?
+  evaluation       EmployeeEvaluation?
 }
 
 // ─────────────────────────────────────────────────────────
@@ -867,4 +940,298 @@ model MobilizationTask {
 
   @@index([bookingId])
   @@index([taskType, status])
+}
+
+// ─────────────────────────────────────────────────────────
+// PHASE 2-5 MODELS
+// ─────────────────────────────────────────────────────────
+
+// ── Org Structure ─────────────────────────────────────────
+
+model Department {
+  id        String     @id @default(uuid())
+  name      String
+  nameTH    String?
+  companyId String
+  company   Company    @relation(fields: [companyId], references: [id])
+  employees Employee[]
+
+  @@unique([companyId, name])
+}
+
+// ── Employee Extended Data ─────────────────────────────────
+
+model EmployeePassport {
+  id             String    @id @default(uuid())
+  employeeId     String    @unique
+  passportNo     String
+  issuedDate     DateTime?
+  expiryDate     DateTime?
+  issuedCountry  String?   @default("TH")
+  visaType       String?
+  visaExpiryDate DateTime?
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  updatedAt DateTime @updatedAt
+}
+
+model EmployeeLeave {
+  id         String   @id @default(uuid())
+  employeeId String
+  leaveType  String // annual / sick / offshore / personal
+  startDate  DateTime
+  endDate    DateTime
+  status     String   @default("approved") // pending / approved / cancelled
+  notes      String?
+
+  employee Employee @relation(fields: [employeeId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([employeeId, startDate, endDate])
+}
+
+model EmployeeCVProfile {
+  id            String  @id @default(uuid())
+  employeeId    String  @unique
+  summary       String?
+  totalYearsExp Int     @default(0)
+  cvFileUrl     String?
+
+  employee    Employee               @relation(fields: [employeeId], references: [id])
+  experiences EmployeeCVExperience[]
+
+  updatedAt DateTime @updatedAt
+}
+
+model EmployeeCVExperience {
+  id          String    @id @default(uuid())
+  cvProfileId String
+  company     String
+  position    String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+
+  cvProfile EmployeeCVProfile @relation(fields: [cvProfileId], references: [id])
+}
+
+// ── Intercompany Borrowing ─────────────────────────────────
+
+model IntercompanyRequest {
+  id              String                    @id @default(uuid())
+  requestId       String
+  fromCompanyId   String
+  toCompanyId     String
+  employeeId      String
+  status          IntercompanyRequestStatus @default(pending)
+  requestedById   String?
+  approvedById    String?
+  notes           String?
+  rejectionReason String?
+  requestedAt     DateTime                  @default(now())
+  resolvedAt      DateTime?
+
+  manpowerRequest ManpowerRequest @relation(fields: [requestId], references: [id])
+  fromCompany     Company         @relation("BorrowingCompany", fields: [fromCompanyId], references: [id])
+  toCompany       Company         @relation("LendingCompany", fields: [toCompanyId], references: [id])
+  employee        Employee        @relation("IntercompanyEmployee", fields: [employeeId], references: [id])
+
+  @@index([requestId])
+  @@index([fromCompanyId, toCompanyId, status])
+}
+
+// ── Team Submission (Manpower → PE Review) ─────────────────
+
+model TeamSubmission {
+  id            String               @id @default(uuid())
+  requestId     String
+  round         Int                  @default(1)
+  status        TeamSubmissionStatus @default(draft)
+  submittedById String?
+  submittedAt   DateTime?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  rejectionNote String?
+
+  manpowerRequest ManpowerRequest @relation(fields: [requestId], references: [id])
+  members         TeamMember[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([requestId, round])
+  @@index([requestId])
+}
+
+model TeamMember {
+  id           String  @id @default(uuid())
+  submissionId String
+  employeeId   String
+  isSSE        Boolean @default(false) // Green Hat rule
+
+  submission TeamSubmission @relation(fields: [submissionId], references: [id])
+
+  @@unique([submissionId, employeeId])
+}
+
+// ── Request Rejection & Senior Review ─────────────────────
+
+model RequestRejection {
+  id           String  @id @default(uuid())
+  requestId    String
+  submissionId String?
+  rejectedById String?
+  round        Int
+  reason       String
+
+  manpowerRequest ManpowerRequest @relation(fields: [requestId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([requestId])
+}
+
+model SeniorReview {
+  id         String  @id @default(uuid())
+  requestId  String  @unique
+  reviewerId String?
+  decision   String? // approved / rejected
+  notes      String?
+
+  manpowerRequest ManpowerRequest @relation(fields: [requestId], references: [id])
+  reviewer        User?           @relation(fields: [reviewerId], references: [id])
+
+  createdAt DateTime  @default(now())
+  decidedAt DateTime?
+}
+
+// ── Manager Approval ───────────────────────────────────────
+
+model ManagerApproval {
+  id           String    @id @default(uuid())
+  assignmentId String    @unique
+  managerId    String?
+  status       String    @default("pending") // pending / approved / rejected
+  notes        String?
+  decidedAt    DateTime?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  manager    User?      @relation(fields: [managerId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// ── Pre-Offshore Check ─────────────────────────────────────
+
+model PreOffshoreCheck {
+  id              String                 @id @default(uuid())
+  assignmentId    String                 @unique
+  urineTestPass   Boolean?
+  bagCheckPass    Boolean?
+  alcoholTestPass Boolean?
+  briefingPass    Boolean?
+  overallResult   PreOffshoreCheckResult @default(pending)
+  notes           String?
+  checkedById     String?
+  checkedAt       DateTime?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// ── Mobilization & Demobilization ─────────────────────────
+
+model Mobilization {
+  id             String         @id @default(uuid())
+  assignmentId   String         @unique
+  scheduledDate  DateTime
+  confirmedDate  DateTime?
+  status         MobDemobStatus @default(scheduled)
+  vesselName     String?
+  departurePoint String?
+  confirmedById  String?
+  notes          String?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Demobilization {
+  id            String         @id @default(uuid())
+  assignmentId  String         @unique
+  scheduledDate DateTime
+  confirmedDate DateTime?
+  status        MobDemobStatus @default(scheduled)
+  returnPoint   String?
+  confirmedById String?
+  notes         String?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ── Employee Evaluation (Post-Demob) ───────────────────────
+
+model EmployeeEvaluation {
+  id           String           @id @default(uuid())
+  employeeId   String
+  assignmentId String           @unique
+  evaluatorId  String? // PE ที่ประเมิน
+  rating       EvaluationRating
+  comments     String?
+  isCompleted  Boolean          @default(false)
+  completedAt  DateTime?
+
+  employee   Employee   @relation("EvaluationTarget", fields: [employeeId], references: [id])
+  assignment Assignment @relation(fields: [assignmentId], references: [id])
+  evaluator  User?      @relation("EvaluatorUser", fields: [evaluatorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([employeeId, isCompleted])
+}
+
+// ── Notifications ──────────────────────────────────────────
+
+model Notification {
+  id           String    @id @default(uuid())
+  userId       String
+  type         String // request_submitted / team_approved / mob_scheduled / ...
+  title        String
+  message      String
+  isRead       Boolean   @default(false)
+  relatedModel String? // "ManpowerRequest" / "Assignment" / ...
+  relatedId    String?
+  readAt       DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+// ── Activity Log ───────────────────────────────────────────
+
+model ActivityLog {
+  id          String  @id @default(uuid())
+  userId      String?
+  action      String // "create" / "update" / "approve" / "reject" / ...
+  entityType  String // "ManpowerRequest" / "Assignment" / ...
+  entityId    String
+  description String?
+  metadata    Json?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([userId, createdAt])
 }
