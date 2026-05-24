@@ -7,7 +7,7 @@ const Layout = ({ children }) => {
   const { userData } = useContext(AppContent);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-100">
+    <div className="flex h-screen overflow-hidden bg-slate-100">
       {/* Sidebar — fixed height, scrolls independently */}
       <div className="h-screen overflow-y-auto flex-shrink-0">
         <Sidebar role={userData?.role?.name} />

@@ -17,14 +17,14 @@ const Field = ({ label, required, children }) => (
 const Input = (props) => (
   <input
     {...props}
-    className="w-full border-b border-gray-300 focus:border-blue-500 focus:outline-none py-1.5 text-sm bg-transparent transition-colors placeholder-gray-400"
+    className="w-full border-b border-gray-300 focus:border-[#1E3A5F] focus:outline-none py-1.5 text-sm bg-transparent transition-colors placeholder-gray-400"
   />
 );
 
 const Select = ({ children, ...props }) => (
   <select
     {...props}
-    className="w-full border-b border-gray-300 focus:border-blue-500 focus:outline-none py-1.5 text-sm bg-transparent transition-colors"
+    className="w-full border-b border-gray-300 focus:border-[#1E3A5F] focus:outline-none py-1.5 text-sm bg-transparent transition-colors"
   >
     {children}
   </select>
@@ -32,7 +32,7 @@ const Select = ({ children, ...props }) => (
 
 const SectionHeader = ({ number, title }) => (
   <div className="flex items-center gap-3 mb-6">
-    <span className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+    <span className="w-7 h-7 rounded-full bg-[#1E3A5F] text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
       {number}
     </span>
     <h2 className="text-base font-semibold text-gray-800">{title}</h2>
@@ -86,7 +86,7 @@ const AddWorker = () => {
       <div className="mb-8">
         <button
           onClick={() => navigate("/admin/workers")}
-          className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1 mb-4"
+          className="text-sm text-[#1E3A5F] hover:text-[#16305A] flex items-center gap-1 mb-4"
         >
           ← Back to Workers
         </button>
@@ -149,7 +149,7 @@ const AddWorker = () => {
 
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Certifications</p>
-          <button onClick={addCert} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+          <button onClick={addCert} className="text-xs text-[#1E3A5F] hover:text-[#16305A] font-medium">
             + Add Certification
           </button>
         </div>
@@ -207,7 +207,7 @@ const AddWorker = () => {
                 type="checkbox"
                 checked={checks[key]}
                 onChange={(e) => setChecks((c) => ({ ...c, [key]: e.target.checked }))}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-400"
+                className="w-4 h-4 rounded border-gray-300 text-[#1E3A5F] focus:ring-[#1E3A5F]"
               />
               <span className="text-sm text-gray-700 group-hover:text-gray-900">{label}</span>
             </label>
@@ -239,7 +239,7 @@ const AddWorker = () => {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition-colors"
+          className="px-5 py-2 text-sm font-medium text-white bg-[#1E3A5F] hover:bg-[#16305A] disabled:opacity-50 rounded-lg transition-colors"
         >
           {saving ? "Saving..." : "Save Worker"}
         </button>

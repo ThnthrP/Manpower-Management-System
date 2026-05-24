@@ -70,7 +70,7 @@ const TrainingMatrix = () => {
           <select
             value={selectedClient}
             onChange={(e) => setSelectedClient(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[180px]"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F] min-w-[180px]"
           >
             <option value="">ทุก Client</option>
             {clients.map((c) => (
@@ -88,7 +88,7 @@ const TrainingMatrix = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="🔍 e.g. Welder, Rigger, Scaffolder..."
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
           />
         </div>
       </div>

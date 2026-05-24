@@ -68,7 +68,7 @@ const EmployeeList = () => {
         </div>
         <button
           onClick={() => navigate("/admin/workers/add")}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          className="flex items-center gap-2 bg-[#1E3A5F] hover:bg-[#16305A] text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
         >
           <span className="text-lg leading-none">+</span> Add Worker
         </button>
@@ -81,12 +81,12 @@ const EmployeeList = () => {
           placeholder="ค้นหาชื่อ / รหัสพนักงาน..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
         />
         <select
           value={status}
           onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A5F]"
         >
           <option value="">ทุกสถานะ</option>
           <option value="active">Active</option>
@@ -139,7 +139,7 @@ const EmployeeList = () => {
                   <td className="px-4 py-3 text-gray-600">{emp.division ?? emp.department?.name ?? "—"}</td>
                   <td className="px-4 py-3">
                     {emp.isOffshore ? (
-                      <span className="text-blue-600 font-semibold text-xs">⚓ Yes</span>
+                      <span className="text-[#1E3A5F] font-semibold text-xs">⚓ Yes</span>
                     ) : (
                       <span className="text-gray-400 text-xs">—</span>
                     )}

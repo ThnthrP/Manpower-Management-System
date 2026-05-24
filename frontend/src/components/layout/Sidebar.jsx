@@ -3,81 +3,68 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { AppContent } from "../../context/AppContext";
 import { CES_MENU, EXPERT_MENU, YARD2_MENU } from "./sidebarMenu";
 
+const COMPANY_LABEL = {
+  CES:       "CES",
+  EXPERTEAM: "EXPERTEAM",
+  YARD2:     "YARD 2",
+};
+
 const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { userData } = useContext(AppContent);
 
-  const role = userData?.role?.name;
+  const role    = userData?.role?.name;
   const company = userData?.company?.name;
 
-  const isActive = (path) => location.pathname.startsWith(path);
+  const isActive = (path) => location.pathname === path || (path !== "/admin" && location.pathname.startsWith(path));
+  const allow    = (roles) => !roles || roles.includes(role);
 
-  const allow = (roles) => {
-    if (!roles) return true;
-    return roles.includes(role);
-  };
-
-  // FIX company mapping
   let menu = [];
-
-  if (company === "CES") {
-    menu = CES_MENU;
-  } else if (company === "EXPERTEAM") {
-    menu = EXPERT_MENU;
-  } else if (company === "YARD2") {
-    menu = YARD2_MENU;
-  }
-
-  // DEBUG
-  console.log("Sidebar Debug:", { role, company, menu });
+  if (company === "CES")       menu = CES_MENU;
+  else if (company === "EXPERTEAM") menu = EXPERT_MENU;
+  else if (company === "YARD2")     menu = YARD2_MENU;
 
   return (
-    <div className="w-64 h-screen bg-slate-900 text-white p-4 overflow-y-auto">
+    <div className="w-60 h-screen flex flex-col bg-[#1E3A5F] text-white overflow-y-auto flex-shrink-0">
       {/* HEADER */}
-      <div className="mb-6">
-        <h2 className="text-lg font-bold">MMS Panel</h2>
-
-        <div className="text-xs mt-1 font-semibold">
-          {company === "CES" && (
-            <span className="text-blue-400">🏗️ CES (Construction)</span>
-          )}
-          {company === "EXPERTEAM" && (
-            <span className="text-purple-400">🔧 EXPERTEAM (Maintenance)</span>
-          )}
-          {company === "YARD2" && (
-            <span className="text-orange-400">⚓ YARD 2 (Operations)</span>
-          )}
-          {!company && <span className="text-red-400">No Company</span>}
+      <div className="px-5 py-5 border-b border-[#2D5A8E]">
+        <div className="text-base font-bold tracking-wide">MMS</div>
+        <div className="text-xs text-slate-300 mt-0.5">
+          {COMPANY_LABEL[company] ?? "—"}
         </div>
       </div>
 
       {/* MENU */}
-      {menu.map((group, idx) => {
-        const filteredItems = group.items.filter((item) => allow(item.roles));
+      <div className="flex-1 px-3 py-4 space-y-5">
+        {menu.map((group, idx) => {
+          const items = group.items.filter((item) => allow(item.roles));
+          if (items.length === 0) return null;
 
-        if (filteredItems.length === 0) return null;
-
-        return (
-          <div key={idx} className="mb-6">
-            <p className="text-xs text-gray-400 mb-2">{group.section}</p>
-
-            <div className="flex flex-col gap-1">
-              {filteredItems.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => navigate(item.path)}
-                  className={`text-left px-3 py-2 rounded transition ${
-                    isActive(item.path) ? "bg-blue-600" : "hover:bg-slate-700"
-                  }`}
-                >
-                  {item.name}
-                </button>
-              ))}
+          return (
+            <div key={idx}>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400 px-2 mb-1">
+                {group.section}
+              </p>
+              <div className="space-y-0.5">
+                {items.map((item) => (
+                  <button
+                    key={item.name}
+                    onClick={() => navigate(item.path)}
+                    className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                      isActive(item.path)
+                        ? "bg-white text-[#1E3A5F] font-semibold"
+                        : "text-slate-200 hover:bg-[#2D5A8E] hover:text-white"
+                    }`}
+                  >
+                    {item.name}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };
