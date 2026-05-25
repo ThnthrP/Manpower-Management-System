@@ -98,12 +98,12 @@ const EmployeeDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState("");
 
-  // Passport edit
+  // [ใหม่] state สำหรับ inline edit passport
   const [passportEdit, setPassportEdit]   = useState(false);
   const [passportForm, setPassportForm]   = useState({ passportNo: "", expiryDate: "", issuedDate: "", issuedCountry: "TH", visaType: "", visaExpiryDate: "" });
   const [passportSaving, setPassportSaving] = useState(false);
 
-  // Cert state
+  // [ใหม่] state สำหรับ add/edit/delete certification
   const [certEditId, setCertEditId]     = useState(null);
   const [certEditForm, setCertEditForm] = useState({ name: "", expiry: "" });
   const [certAddOpen, setCertAddOpen]   = useState(false);
@@ -218,6 +218,7 @@ const EmployeeDetail = () => {
               </div>
             </div>
           </div>
+          {/* [ใหม่] ปุ่ม CV และ Edit Worker */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <button onClick={() => navigate(`/admin/workers/${emp.id}/cv`)}
               className="text-sm px-4 py-2 border border-gray-300 rounded text-gray-600 hover:bg-gray-50 transition-colors">

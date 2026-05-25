@@ -1,3 +1,5 @@
+// [ใหม่] หน้า Edit Worker — แก้ไขข้อมูลพื้นฐานของพนักงาน (redesign จาก old underline style)
+// Route: /admin/workers/:id/edit
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
