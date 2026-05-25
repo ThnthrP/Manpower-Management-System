@@ -7,15 +7,18 @@ const Layout = ({ children }) => {
   const { userData } = useContext(AppContent);
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <Sidebar role={userData?.role?.name} />
+    <div className="flex h-screen overflow-hidden bg-white">
+      {/* Sidebar — fixed height, scrolls independently */}
+      <div className="h-screen overflow-y-auto flex-shrink-0">
+        <Sidebar role={userData?.role?.name} />
+      </div>
 
-      {/* Right */}
-      <div className="flex-1 flex flex-col">
+      {/* Right — navbar fixed top, content scrolls */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen">
         <Navbar />
-
-        <div className="p-6 flex-1">{children}</div>
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
       </div>
     </div>
   );

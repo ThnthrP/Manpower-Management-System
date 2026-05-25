@@ -56,9 +56,9 @@ async function createClientTraining(
 
   await prisma.clientTraining.upsert({
     where: {
-      globalTrainingId_contractId: {
-        globalTrainingId: globalTraining.id,
+      contractId_name: {
         contractId: contract.id,
+        name: trainingName,
       },
     },
 
@@ -66,15 +66,15 @@ async function createClientTraining(
       completionPeriodCode,
       nameAlias,
       trainingStandardId: trainingStandard.id,
+      globalTrainingId: globalTraining.id,
     },
 
     create: {
+      name: trainingName,
       globalTrainingId: globalTraining.id,
       contractId: contract.id,
-
       completionPeriodCode,
       nameAlias,
-
       trainingStandardId: trainingStandard.id,
     },
   });

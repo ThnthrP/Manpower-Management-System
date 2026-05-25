@@ -23,6 +23,13 @@ const CompanySelect = () => {
       key: "EXPERTEAM",
       logo: "/experteam_logo.png",
     },
+    {
+      name: "YARD 2",
+      label: "Yard Operations",
+      desc: "Yard 2 manpower management, offshore crew deployment and operations",
+      key: "YARD2",
+      logo: "/yard2_logo.png",
+    },
   ];
 
   return (
@@ -77,7 +84,7 @@ const CompanySelect = () => {
 
       {/* FOOTER (optional but pro look) */}
       <p className="mt-12 text-xs text-gray-400">
-        © Experteam Manpower Management System
+        © MMS System
       </p>
     </div>
   );

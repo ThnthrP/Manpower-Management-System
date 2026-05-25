@@ -56,9 +56,9 @@ async function createClientTraining(
 
   await prisma.clientTraining.upsert({
     where: {
-      globalTrainingId_contractId: {
-        globalTrainingId: globalTraining.id,
+      contractId_name: {
         contractId: contract.id,
+        name: trainingName,
       },
     },
 
@@ -66,15 +66,15 @@ async function createClientTraining(
       completionPeriodCode,
       nameAlias,
       trainingStandardId: trainingStandard.id,
+      globalTrainingId: globalTraining.id,
     },
 
     create: {
+      name: trainingName,
       globalTrainingId: globalTraining.id,
       contractId: contract.id,
-
       completionPeriodCode,
       nameAlias,
-
       trainingStandardId: trainingStandard.id,
     },
   });
@@ -139,6 +139,20 @@ async function seedPTTClientTrainings() {
     ["Crane Operator License (Class A, B+, B, C)"],
 
     ["Rigging, Slinging & Banksman"],
+
+    ["T-BOSIET"],
+
+    ["Fitting"],
+
+    ["Basic Rigging (include crane signal and slinging techniques)"],
+
+    ["Working At Height - Combined Course & Rescue (Use Fall Protection System)"],
+
+    ["Qualified Gas Tester (QGT)"],
+
+    ["Confined Space Entry (by laws)"],
+
+    ["Basic Crane Operator (Comply with API RP2D or equivalent)"],
   ];
 
   for (const [trainingName, completionPeriodCode, nameAlias] of TRAININGS) {

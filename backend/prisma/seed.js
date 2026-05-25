@@ -325,23 +325,16 @@ async function main() {
     data: [
       { name: "CES", type: "construction" },
       { name: "EXPERTEAM", type: "maintenance" },
+      { name: "YARD2", type: "subcontractor" },
     ],
     skipDuplicates: true,
   });
 
-  const cesCompany = await prisma.company.findFirst({
-    where: {
-      name: "CES",
-    },
-  });
+  const cesCompany = await prisma.company.findFirst({ where: { name: "CES" } });
+  const expertCompany = await prisma.company.findFirst({ where: { name: "EXPERTEAM" } });
+  const yard2Company = await prisma.company.findFirst({ where: { name: "YARD2" } });
 
-  const expertCompany = await prisma.company.findFirst({
-    where: {
-      name: "EXPERTEAM",
-    },
-  });
-
-  if (!cesCompany || !expertCompany) {
+  if (!cesCompany || !expertCompany || !yard2Company) {
     throw new Error("Company not found");
   }
 
@@ -369,9 +362,7 @@ async function main() {
 
   // EXPERT Admin
   await prisma.user.upsert({
-    where: {
-      email: "admin_expert@mms.com",
-    },
+    where: { email: "admin_expert@mms.com" },
     update: {},
     create: {
       name: "Admin EXPERT",
@@ -379,6 +370,19 @@ async function main() {
       password: hashedPassword,
       roleId: adminRoleId,
       companyId: expertCompany.id,
+    },
+  });
+
+  // YARD2 Admin
+  await prisma.user.upsert({
+    where: { email: "admin_yard2@mms.com" },
+    update: {},
+    create: {
+      name: "Admin YARD2",
+      email: "admin_yard2@mms.com",
+      password: hashedPassword,
+      roleId: adminRoleId,
+      companyId: yard2Company.id,
     },
   });
 
@@ -391,12 +395,14 @@ async function main() {
   console.log(`   Mappings    : ${rpData.length}`);
 
   console.log("\n👤 Default Admin Accounts");
-  console.log("   admin_ces@mms.com / admin1234");
+  console.log("   admin_ces@mms.com    / admin1234");
   console.log("   admin_expert@mms.com / admin1234");
+  console.log("   admin_yard2@mms.com  / admin1234");
 
   console.log("\n🏢 Companies");
   console.log(`   CES       : ${cesCompany.id}`);
   console.log(`   EXPERTEAM : ${expertCompany.id}`);
+  console.log(`   YARD2     : ${yard2Company.id}`);
 }
 
 main()

@@ -10,9 +10,12 @@ async function seedCompanies() {
       name: "EXPERTEAM",
       type: "main",
     },
-
     {
       name: "CES",
+      type: "subcontractor",
+    },
+    {
+      name: "YARD2",
       type: "subcontractor",
     },
   ];

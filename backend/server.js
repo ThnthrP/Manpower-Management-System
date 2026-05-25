@@ -9,9 +9,16 @@ import safetyRouter from "./routes/safetyRoutes.js";
 import medicalRouter from "./routes/medicalRoutes.js";
 import requestRouter from "./routes/requestRoutes.js";
 
-// import bookingRouter from "./routes/bookingRoutes.js";
-// import vehicleRouter from "./routes/vehicleRoutes.js";
-// import costRouter from "./routes/costRoutes.js";
+import employeeRouter from "./routes/employeeRoutes.js";
+// Phase 2-5 routes (stub — implement controllers as needed)
+// import candidateRouter from "./routes/candidateRoutes.js";
+// import teamRouter from "./routes/teamRoutes.js";
+// import assignmentRouter from "./routes/assignmentRoutes.js";
+// import intercompanyRouter from "./routes/intercompanyRoutes.js";
+// import preOffshoreRouter from "./routes/preOffshoreRoutes.js";
+// import mobRouter from "./routes/mobRoutes.js";
+// import evaluationRouter from "./routes/evaluationRoutes.js";
+// import notificationRouter from "./routes/notificationRoutes.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -42,12 +49,19 @@ app.use("/api/user", userRouter);
 app.use("/api/safety", safetyRouter);
 app.use("/api/medical", medicalRouter);
 app.use("/api/request", requestRouter);
-// app.use("/api/bookings", bookingRouter);
-// app.use("/api/vehicles", vehicleRouter);
-app.use("/uploads", express.static("uploads"));
-// app.use("/api/bookings", bookingRouter);
 
-// app.use("/api/costs", costRouter);
+app.use("/api/employees", employeeRouter);
+// Phase 2-5 routes (uncomment when controllers are ready)
+// app.use("/api/candidates", candidateRouter);
+// app.use("/api/teams", teamRouter);
+// app.use("/api/assignments", assignmentRouter);
+// app.use("/api/intercompany", intercompanyRouter);
+// app.use("/api/pre-offshore", preOffshoreRouter);
+// app.use("/api/mob", mobRouter);
+// app.use("/api/evaluation", evaluationRouter);
+// app.use("/api/notifications", notificationRouter);
+
+app.use("/uploads", express.static("uploads"));
 
 // start server
 app.listen(port, () => {
