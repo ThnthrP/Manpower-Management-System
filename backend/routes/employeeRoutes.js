@@ -12,15 +12,15 @@ import {
   getPositions,
   createEmployee,
   updateEmployee,
-  upsertPassport,
-  addCertification,
-  updateCertification,
-  deleteCertification,
-  getCV,
-  upsertCV,
-  addExperience,
-  updateExperience,
-  deleteExperience,
+  upsertPassport,     // [ใหม่]
+  addCertification,   // [ใหม่]
+  updateCertification,// [ใหม่]
+  deleteCertification,// [ใหม่]
+  getCV,              // [ใหม่]
+  upsertCV,           // [ใหม่]
+  addExperience,      // [ใหม่]
+  updateExperience,   // [ใหม่]
+  deleteExperience,   // [ใหม่]
 } from "../controllers/employeeController.js";
 
 const router = express.Router();
@@ -38,15 +38,15 @@ router.post("/",              userAuth, companyScope, authorize("employee","crea
 
 router.get("/:id/compliance",                   userAuth, companyScope, authorize("employee","view"),   getComplianceByEmployee);
 
-// Passport
+// [ใหม่] Passport — เพิ่ม/แก้ไข passport ของพนักงาน
 router.put("/:id/passport",                     userAuth, companyScope, authorize("employee","update"), upsertPassport);
 
-// Certifications
+// [ใหม่] Certifications — CRUD ใบรับรอง/training ของพนักงาน
 router.post("/:id/certifications",              userAuth, companyScope, authorize("employee","update"), addCertification);
 router.put("/:id/certifications/:certId",       userAuth, companyScope, authorize("employee","update"), updateCertification);
 router.delete("/:id/certifications/:certId",    userAuth, companyScope, authorize("employee","update"), deleteCertification);
 
-// CV
+// [ใหม่] CV — ประวัติการทำงาน (CVProfile + CVExperience)
 router.get("/:id/cv",                           userAuth, companyScope, authorize("employee","view"),   getCV);
 router.put("/:id/cv",                           userAuth, companyScope, authorize("employee","update"), upsertCV);
 router.post("/:id/cv/experiences",              userAuth, companyScope, authorize("employee","update"), addExperience);

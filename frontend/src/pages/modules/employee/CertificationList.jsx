@@ -1,3 +1,5 @@
+// [ใหม่] หน้า Certifications — แสดงรายการ cert/training ของพนักงานทุกคน พร้อม filter status
+// Route: /admin/certifications
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";

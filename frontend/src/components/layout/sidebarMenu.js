@@ -16,11 +16,11 @@ export const CES_MENU = [
   },
 
   {
-    section: "PHASE 1 — ONBOARDING (HR)",
+    section: "PHASE 1 — ONBOARDING (HR)", // [ใหม่] เพิ่ม (HR) และเพิ่ม Certifications, Passports
     items: [
       { name: "Workers",             path: "/admin/workers",              roles: ["admin", "hr", "manpower"] },
-      { name: "Certifications",      path: "/admin/certifications",       roles: ["admin", "hr", "manpower"] },
-      { name: "Passports",           path: "/admin/passports",            roles: ["admin", "hr", "manpower"] },
+      { name: "Certifications",      path: "/admin/certifications",       roles: ["admin", "hr", "manpower"] }, // [ใหม่]
+      { name: "Passports",           path: "/admin/passports",            roles: ["admin", "hr", "manpower"] }, // [ใหม่]
       { name: "Training Matrix",     path: "/admin/training-matrix",      roles: ["admin", "hr", "manpower", "expert"] },
     ],
   },

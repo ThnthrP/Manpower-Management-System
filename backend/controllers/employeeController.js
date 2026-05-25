@@ -516,9 +516,13 @@ export const getPositions = async (req, res) => {
   }
 };
 
+// ═══════════════════════════════════════════════════════════
+// [ใหม่] เพิ่มใน Phase 1 — Passport / Certification / CV
+// ═══════════════════════════════════════════════════════════
+
 // ─── Passport ────────────────────────────────────────────
 
-// PUT /api/employees/:id/passport
+// [ใหม่] PUT /api/employees/:id/passport — เพิ่มหรือแก้ไข passport (upsert)
 export const upsertPassport = async (req, res) => {
   try {
     const { companyId } = req;
@@ -559,6 +563,7 @@ export const upsertPassport = async (req, res) => {
 
 // ─── Certifications ───────────────────────────────────────
 
+// [ใหม่] helper คำนวณสถานะ cert จากวันหมดอายุ
 const calcCertStatus = (expiryDate) => {
   if (!expiryDate) return "pending";
   const days = Math.ceil((new Date(expiryDate) - new Date()) / 86400000);
@@ -567,7 +572,7 @@ const calcCertStatus = (expiryDate) => {
   return "completed";
 };
 
-// POST /api/employees/:id/certifications
+// [ใหม่] POST /api/employees/:id/certifications — เพิ่ม cert ใหม่
 export const addCertification = async (req, res) => {
   try {
     const { companyId } = req;
@@ -602,7 +607,7 @@ export const addCertification = async (req, res) => {
   }
 };
 
-// PUT /api/employees/:id/certifications/:certId
+// [ใหม่] PUT /api/employees/:id/certifications/:certId — แก้ไข cert
 export const updateCertification = async (req, res) => {
   try {
     const { companyId } = req;
@@ -629,7 +634,7 @@ export const updateCertification = async (req, res) => {
   }
 };
 
-// DELETE /api/employees/:id/certifications/:certId
+// [ใหม่] DELETE /api/employees/:id/certifications/:certId — ลบ cert
 export const deleteCertification = async (req, res) => {
   try {
     const { companyId } = req;
@@ -647,7 +652,7 @@ export const deleteCertification = async (req, res) => {
 
 // ─── CV ──────────────────────────────────────────────────
 
-// GET /api/employees/:id/cv
+// [ใหม่] GET /api/employees/:id/cv — ดึง CV profile + work experiences
 export const getCV = async (req, res) => {
   try {
     const { companyId } = req;
@@ -673,7 +678,7 @@ export const getCV = async (req, res) => {
   }
 };
 
-// PUT /api/employees/:id/cv
+// [ใหม่] PUT /api/employees/:id/cv — บันทึก summary + totalYearsExp (upsert)
 export const upsertCV = async (req, res) => {
   try {
     const { companyId } = req;
@@ -696,7 +701,7 @@ export const upsertCV = async (req, res) => {
   }
 };
 
-// POST /api/employees/:id/cv/experiences
+// [ใหม่] POST /api/employees/:id/cv/experiences — เพิ่มประสบการณ์ทำงาน
 export const addExperience = async (req, res) => {
   try {
     const { companyId } = req;
@@ -732,7 +737,7 @@ export const addExperience = async (req, res) => {
   }
 };
 
-// PUT /api/employees/:id/cv/experiences/:expId
+// [ใหม่] PUT /api/employees/:id/cv/experiences/:expId — แก้ไขประสบการณ์
 export const updateExperience = async (req, res) => {
   try {
     const { companyId } = req;
@@ -759,7 +764,7 @@ export const updateExperience = async (req, res) => {
   }
 };
 
-// DELETE /api/employees/:id/cv/experiences/:expId
+// [ใหม่] DELETE /api/employees/:id/cv/experiences/:expId — ลบประสบการณ์
 export const deleteExperience = async (req, res) => {
   try {
     const { companyId } = req;

@@ -1,3 +1,5 @@
+// [ใหม่] หน้า CV พนักงาน — แสดงและแก้ไข Work Experience + Profile Summary
+// Route: /admin/workers/:id/cv
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
