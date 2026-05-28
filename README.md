@@ -1,509 +1,132 @@
 # Manpower Management System (MMS)
 
-A web-based workforce management platform designed for multi-company operations (CES & EXPERTEAM), supporting role-based workflows for manpower requests, deployment, safety, and training.
+A web-based workforce management platform for multi-company offshore operations, supporting manpower workflows, training compliance, medical records, and workforce deployment.
 
 ---
 
-## 📌 Overview
+## Overview
 
-MMS handles **multi-tenant workforce management** where each company operates independently within the same system.
+MMS is a multi-company workforce management system designed for offshore and industrial operations under **EXPERTEAM** and **CES**.
 
-The platform ensures:
+**Supported offshore clients:**
 
-- Users cannot access data across companies
-- UI (Sidebar / Navbar / Dashboard) adapts dynamically based on **company and role**
-- Secure and scalable architecture for offshore and onshore operations
-
----
-
-## 🔑 Core Architecture
-
-### 🏢 Multi-Company (Multi-Tenant)
-
-- Each user belongs to exactly **one company**
-- Data is strictly isolated per company
-- Users **cannot login across companies**
-- Backend enforces company-level filtering
+| Client | Description |
+|--------|-------------|
+| Chevron | Offshore platform operations |
+| Erawan (PTTEP) | Erawan offshore campaign |
+| PTT | PTT onshore/offshore |
+| Valeura | Valeura offshore |
 
 ---
 
-### 🛡️ Role-Based Access Control (RBAC)
+## Tech Stack
 
-- Each user has **one role**
-- Roles determine accessible pages, sidebar menu, and API permissions
-- Permissions enforced via middleware:
-
-```js
-authorize(resource, action)
-```
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React (Vite), React Router v6, Tailwind CSS, Axios |
+| Backend | Node.js, Express.js, Prisma ORM, PostgreSQL |
+| Auth | JWT (HTTP-only cookie), OTP email reset |
 
 ---
 
-### 🧭 Frontend Routing Architecture
+## Features
 
-```
-Login
- → /admin
-   → CompanyRouter
-     ├── CES
-     │     → pages/ces/index.jsx
-     │          → switch(role)
-     │               → AdminDashboard / PeDashboard / ...
-     │
-     └── EXPERTEAM
-           → pages/expert/index.jsx
-                → switch(role)
-```
-
-- Single entry point: `/admin`
-- Company-based routing
-- Role-based UI rendering
+- **Multi-company isolation** — users can only access their own company data
+- **Role-based access control (RBAC)** — middleware-enforced per resource and action
+- **Dynamic sidebar & dashboard** — rendered by company + role combination
+- **Training compliance** — global training normalization, client-specific matrix, expiry tracking
+- **Medical records** — hospital, expiry, offshore medical requirements
+- **Workforce import pipeline** — Excel import for employees, trainings, and training matrix per client
+- **Manpower workflow** — request → candidate proposal → approval → deployment → assignment
 
 ---
 
-### 🎯 Dynamic UI Behavior
+## Roles
 
-| Layer     | Controlled By                  |
-| --------- | ------------------------------ |
-| Company   | Backend (`user.companyId`)     |
-| Role      | Backend (`user.role`)          |
-| Sidebar   | Frontend (company + role)      |
-| Dashboard | Frontend (role switch)         |
-| Data      | Backend (filtered by company)  |
-
----
-
-## 🚀 Features
-
-### 🔐 Authentication
-
-- Email & password login
-- JWT (HTTP-only cookie)
-- Auto session restore via `/api/auth/is-auth`
-- OTP password reset via email
+| Role | Description |
+|------|-------------|
+| `admin` | Full system access |
+| `pe` | Project Engineer — creates manpower requests |
+| `pe_head` | PE approval override |
+| `manpower` | Candidate management |
+| `hr` | Employee management |
+| `safety` | Safety compliance |
+| `nurse` | Medical records |
+| `ta` | Release approval |
+| `expert` | Training & matching review |
+| `bd` | Business / customer handling |
 
 ---
 
-### 🏢 Company Isolation
-
-- Users only see their own company's data
-- Admin cannot view or modify users from another company
-- Company is assigned at registration and is not editable from the UI
-
----
-
-### 🧭 Role-Based UI
-
-Sidebar and Dashboard change dynamically based on role:
-
-| Role       | View                    |
-| ---------- | ----------------------- |
-| `admin`    | Full system access      |
-| `pe`       | Project-focused view    |
-| `pe_head`  | Override PE rejections  |
-| `manpower` | Candidate management    |
-| `hr`       | Employee management     |
-| `safety`   | Safety screenings       |
-| `nurse`    | Medical records         |
-| `ta`       | Release approvals       |
-| `expert`   | SSE review & matching   |
-| `bd`       | Customer requirements   |
-
----
-
-### 📋 Manpower Workflow
+## Manpower Workflow
 
 ```
 PE creates request
     ↓
-Manpower proposes candidates (Round 1, 2, 3...)
+Manpower proposes candidates
     ↓
-PE approves or rejects each candidate
+PE approves / rejects candidates
     ↓
-Safety check + Medical check must pass
+Safety + Medical checks
     ↓
-Deployment → Assignment created
+Deployment
     ↓
-WorkflowLog records every action
+Assignment created
+    ↓
+WorkflowLog records actions
 ```
 
 ---
 
-## 🏗️ Tech Stack
-
-### Frontend
-
-- React (Vite)
-- React Router v6
-- Context API
-- Axios
-- Tailwind CSS
-
-### Backend
-
-- Node.js + Express
-- Prisma ORM
-- PostgreSQL
-- JWT (HTTP-only cookie)
-- Nodemailer (OTP email)
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
-frontend/
-├── public/
+mms/
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── layout/       # Layout, Navbar, Sidebar, sidebarMenu
+│   │   │   ├── guards/       # ProtectedRoute, AdminRoute, RoleRoute
+│   │   │   └── ui/
+│   │   ├── context/          # AppContext, AuthContext, CompanyContext
+│   │   ├── pages/
+│   │   │   ├── shared/
+│   │   │   ├── expert/
+│   │   │   ├── ces/
+│   │   │   └── system/
+│   │   ├── routes/
+│   │   └── services/         # api, auth, employee, training, medical
+│   └── .env
 │
-├── src/
-│
-│   ├── assets/
-│   │
-│   │   ├── images/
-│   │   ├── icons/
-│   │   └── logos/
-│
-│   ├── components/
-│   │
-│   │   ├── layout/
-│   │   │   ├── Layout.jsx
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── Sidebar.jsx
-│   │   │   └── sidebarMenu.js
-│   │   │
-│   │   ├── guards/
-│   │   │   ├── AdminRoute.jsx
-│   │   │   ├── ProtectedRoute.jsx
-│   │   │   └── RoleRoute.jsx
-│   │   │
-│   │   ├── ui/
-│   │   │   ├── Button.jsx
-│   │   │   ├── Modal.jsx
-│   │   │   ├── Table.jsx
-│   │   │   ├── Loader.jsx
-│   │   │   └── StatusBadge.jsx
-│   │   │
-│   │   └── common/
-│   │       ├── PageHeader.jsx
-│   │       ├── EmptyState.jsx
-│   │       ├── SearchInput.jsx
-│   │       └── ConfirmDialog.jsx
-│
-│   ├── context/
-│   │   ├── AppContext.jsx
-│   │   ├── AuthContext.jsx
-│   │   └── CompanyContext.jsx
-│
-│   ├── hooks/
-│   │   ├── useAuth.js
-│   │   ├── useCompany.js
-│   │   └── usePermission.js
-│
-│   ├── services/
-│   │   ├── api.js
-│   │   ├── authService.js
-│   │   ├── employeeService.js
-│   │   ├── trainingService.js
-│   │   ├── medicalService.js
-│   │   └── manpowerService.js
-│
-│   ├── utils/
-│   │   ├── formatDate.js
-│   │   ├── calculateExperience.js
-│   │   ├── constants.js
-│   │   └── permissions.js
-│
-│   ├── pages/
-│   │
-│   │   ├── shared/
-│   │   │   ├── Login.jsx
-│   │   │   ├── CompanySelect.jsx
-│   │   │   ├── Profile.jsx
-│   │   │   ├── ResetPassword.jsx
-│   │   │   ├── Unauthorized.jsx
-│   │   │   └── NotFound.jsx
-│   │   │
-│   │   ├── expert/
-│   │   │
-│   │   │   ├── index.jsx
-│   │   │   │
-│   │   │   ├── dashboard/
-│   │   │   │   ├── AdminDashboard.jsx
-│   │   │   │   ├── HrDashboard.jsx
-│   │   │   │   ├── PeDashboard.jsx
-│   │   │   │   ├── SafetyDashboard.jsx
-│   │   │   │   ├── NurseDashboard.jsx
-│   │   │   │   ├── ManpowerDashboard.jsx
-│   │   │   │   └── ExpertDashboard.jsx
-│   │   │   │
-│   │   │   ├── employees/
-│   │   │   │   ├── EmployeeList.jsx
-│   │   │   │   ├── EmployeeDetail.jsx
-│   │   │   │   ├── EmployeeProfile.jsx
-│   │   │   │   └── EmployeeTraining.jsx
-│   │   │   │
-│   │   │   ├── trainings/
-│   │   │   │   ├── TrainingMatrixExpert.jsx
-│   │   │   │   ├── TrainingRequirement.jsx
-│   │   │   │   ├── TrainingHistory.jsx
-│   │   │   │   └── TrainingDashboard.jsx
-│   │   │   │
-│   │   │   ├── medical/
-│   │   │   │   ├── MedicalDashboard.jsx
-│   │   │   │   ├── MedicalList.jsx
-│   │   │   │   └── MedicalHistory.jsx
-│   │   │   │
-│   │   │   ├── manpower/
-│   │   │   │   ├── RequestList.jsx
-│   │   │   │   ├── BookingList.jsx
-│   │   │   │   ├── AssignmentList.jsx
-│   │   │   │   └── DeploymentBoard.jsx
-│   │   │   │
-│   │   │   ├── safety/
-│   │   │   │   ├── SafetyDashboard.jsx
-│   │   │   │   ├── SafetyChecks.jsx
-│   │   │   │   └── IncidentReports.jsx
-│   │   │   │
-│   │   │   └── admin/
-│   │   │       ├── AdminUsers.jsx
-│   │   │       ├── Roles.jsx
-│   │   │       ├── Permissions.jsx
-│   │   │       └── Notifications.jsx
-│   │   │
-│   │   ├── ces/
-│   │   │
-│   │   │   ├── index.jsx
-│   │   │   │
-│   │   │   ├── dashboard/
-│   │   │   │   ├── AdminDashboard.jsx
-│   │   │   │   ├── HrDashboard.jsx
-│   │   │   │   ├── PeDashboard.jsx
-│   │   │   │   ├── SafetyDashboard.jsx
-│   │   │   │   ├── NurseDashboard.jsx
-│   │   │   │   ├── ManpowerDashboard.jsx
-│   │   │   │   └── TaDashboard.jsx
-│   │   │   │
-│   │   │   ├── manpower/
-│   │   │   ├── employees/
-│   │   │   ├── trainings/
-│   │   │   ├── medical/
-│   │   │   └── safety/
-│   │   │
-│   │   └── system/
-│   │       ├── Companies.jsx
-│   │       ├── Contracts.jsx
-│   │       ├── Notifications.jsx
-│   │       └── SystemDashboard.jsx
-│
-│   ├── routes/
-│   │
-│   │   ├── shared/
-│   │   │   └── SharedRoutes.jsx
-│   │   │
-│   │   ├── company/
-│   │   │   ├── CompanyRouter.jsx
-│   │   │   ├── ExpertRoutes.jsx
-│   │   │   └── CesRoutes.jsx
-│   │   │
-│   │   └── index.jsx
-│
-│   ├── styles/
-│   │   ├── index.css
-│   │   └── theme.css
-│
-│   ├── App.jsx
-│   └── main.jsx
-│
-├── .env
-├── .gitignore
-├── package.json
-└── vite.config.js
-
-backend/
-├── config/
-│   ├── prisma.js
-│   ├── nodemailer.js
-│   ├── emailTemplates.js
-│   ├── jwt.js
-│   └── multer.js
-│
-├── controllers/
-│
-│   ├── auth/
-│   │   └── authController.js
-│   │
-│   ├── employee/
-│   │   ├── employeeController.js
-│   │   ├── employeeTrainingController.js
-│   │   └── medicalController.js
-│   │
-│   ├── manpower/
-│   │   ├── requestController.js
-│   │   ├── bookingController.js
-│   │   └── assignmentController.js
-│   │
-│   ├── safety/
-│   │   └── safetyController.js
-│   │
-│   └── admin/
-│       ├── userController.js
-│       ├── roleController.js
-│       └── permissionController.js
-│
-├── middleware/
-│   ├── authorize.js
-│   ├── upload.js
-│   ├── userAuth.js
-│   ├── errorHandler.js
-│   └── validateRequest.js
-│
-├── prisma/
-│
-│   ├── migrations/
-│   │
-│   ├── seeds/
-│   │
-│   │   ├── common/
-│   │   │   ├── seedCompanies.js
-│   │   │   ├── seedClients.js
-│   │   │   ├── seedContracts.js
-│   │   │   ├── seedPositions.js
-│   │   │   ├── seedGlobalTrainings.js
-│   │   │   ├── seedMedicalRequirements.js
-│   │   │   ├── seedTrainingStandards.js
-│   │   │   ├── seedTrainings.js
-│   │   │   └── clearTraining.js
-│   │   │
-│   │   ├── chevron/
-│   │   │   └── seedClientTrainings.js
-│   │   │
-│   │   ├── erawan/
-│   │   │   └── seedClientTrainings.js
-│   │   │
-│   │   ├── ptt/
-│   │   │   └── seedClientTrainings.js
-│   │   │
-│   │   └── valeura/
-│   │       └── seedClientTrainings.js
-│   │
-│   ├── schema.prisma
-│   ├── seed.js
-│   └── trainingMapping.json
-│
-├── routes/
-│   ├── authRoutes.js
-│   ├── userRoutes.js
-│   ├── employeeRoutes.js
-│   ├── trainingRoutes.js
-│   ├── medicalRoutes.js
-│   ├── safetyRoutes.js
-│   ├── requestRoutes.js
-│   ├── bookingRoutes.js
-│   └── assignmentRoutes.js
-│
-├── scripts/
-│
-│   ├── common/
-│   │   ├── parseDate.js
-│   │   ├── cleanText.js
-│   │   ├── normalizeName.js
-│   │   ├── normalizePosition.js
-│   │   └── excelHelpers.js
-│   │
-│   ├── chevron/
-│   │   ├── importEmployees.js
-│   │   ├── importEmployeeTrainings.js
-│   │   └── importMatrix.js
-│   │
-│   ├── erawan/
-│   │   ├── importEmployees.js
-│   │   ├── importEmployeeTrainings.js
-│   │   └── importMatrix.js
-│   │
-│   ├── ptt/
-│   │   ├── importEmployees.js
-│   │   ├── importEmployeeTrainings.js
-│   │   └── importMatrix.js
-│   │
-│   ├── valeura/
-│   │   ├── importEmployees.js
-│   │   ├── importEmployeeTrainings.js
-│   │   └── importMatrix.js
-│   │
-│   ├── resetImportData.js
-│   └── debugExcel.js
-│
-├── services/
-│   ├── authService.js
-│   ├── employeeService.js
-│   ├── trainingService.js
-│   ├── medicalService.js
-│   ├── manpowerService.js
-│   └── notificationService.js
-│
-├── utils/
-│   ├── calculateExperience.js
-│   ├── formatDate.js
-│   ├── constants.js
-│   ├── permissions.js
-│   └── trainingStatus.js
-│
-├── uploads/
-│
-├── .env
-├── .gitignore
-├── package.json
-├── package-lock.json
-└── server.js
+└── backend/
+    ├── controllers/
+    ├── middleware/
+    ├── routes/
+    ├── services/
+    ├── utils/
+    ├── prisma/
+    │   ├── schema.prisma
+    │   ├── seed.js
+    │   └── seeds/
+    │       ├── common/        # seedClients, seedContracts, seedGlobalTrainings, seedTrainingStandards, seedPositions
+    │       ├── erawan/        # seedClientTrainings
+    │       ├── chevron/
+    │       ├── ptt/
+    │       └── valeura/
+    ├── scripts/
+    │   ├── common/            # debugExcel
+    │   ├── erawan/            # importEmployees, importMatrix
+    │   ├── chevron/
+    │   ├── ptt/
+    │   └── valeura/
+    └── .env
 ```
 
 ---
 
-## 🔐 Security Model
+## Getting Started
 
-| Layer              | Protection                        |
-| ------------------ | --------------------------------- |
-| Authentication     | JWT (HTTP-only cookie)            |
-| Authorization      | RBAC middleware                   |
-| Company isolation  | Backend filtering per `companyId` |
-| UI access          | `ProtectedRoute` + role check     |
-
----
-
-## 📌 Key API Rules
-
-| Endpoint              | Rule                                   |
-| --------------------- | -------------------------------------- |
-| `GET /api/user/all`   | Returns only users in the same company |
-| `PUT /api/user/role`  | Admin only                             |
-| `user.companyId`      | Not editable via frontend              |
-
----
-
-## ⚙️ Environment Variables
-
-### Backend (`server/.env`)
-
-```env
-PORT=4000
-DATABASE_URL=postgresql://user:password@localhost:5432/manpower_db
-JWT_SECRET=your_jwt_secret
-CLIENT_URL=http://localhost:5173
-SENDER_EMAIL=your_email@gmail.com
-SENDER_PASSWORD=your_app_password
-```
-
-### Frontend (`frontend/.env`)
-
-```env
-VITE_BACKEND_URL=http://localhost:4000
-```
-
----
-
-## ▶️ Getting Started
-
-### 1. Clone the repository
+### 1. Clone repository
 
 ```bash
 git clone https://github.com/your-username/mms.git
@@ -513,12 +136,9 @@ cd mms
 ### 2. Backend setup
 
 ```bash
-cd server
+cd backend
 npm install
-cp .env.example .env
-# Edit .env with your DATABASE_URL and JWT_SECRET
-
-npx prisma migrate dev --name init
+npx prisma migrate dev
 node prisma/seed.js
 npm run dev
 ```
@@ -531,29 +151,78 @@ npm install
 npm run dev
 ```
 
-### 4. Default admin account
+---
 
-```
-Email    : admin@mms.com
-Password : admin1234
+## Environment Variables
+
+**`backend/.env`**
+
+```env
+PORT=4000
+DATABASE_URL=postgresql://user:password@localhost:5432/manpower_db
+JWT_SECRET=your_jwt_secret
+CLIENT_URL=http://localhost:5173
+SENDER_EMAIL=your_email@gmail.com
+SENDER_PASSWORD=your_app_password
 ```
 
-> ⚠️ Change the admin password immediately after first login in production.
+**`frontend/.env`**
+
+```env
+VITE_BACKEND_URL=http://localhost:4000
+```
 
 ---
 
-## 📅 Development Status
+## Seed Order
 
-| Module                    | Status          |
-| ------------------------- | --------------- |
-| Authentication (JWT)      | ✅ Done          |
-| RBAC (Role + Permission)  | ✅ Done          |
-| Multi-company isolation   | ✅ Done          |
-| Routing architecture      | ✅ Done          |
-| User Management (Admin)   | ✅ Done          |
-| Sidebar (dynamic)         | 🔄 In progress  |
-| Dashboard (per role)      | 🔄 In progress  |
-| Manpower request flow     | 🔄 In progress  |
-| Safety / Medical gate     | 🔄 In progress  |
-| Training matrix           | ⏳ Planned       |
-| Notifications             | ⏳ Planned       |
+```bash
+node prisma/seeds/common/seedClients.js
+node prisma/seeds/common/seedContracts.js
+node prisma/seeds/common/seedGlobalTrainings.js
+node prisma/seeds/common/seedTrainingStandards.js
+node prisma/seeds/common/seedPositions.js
+node prisma/seeds/erawan/seedClientTrainings.js   # repeat per client
+```
+
+---
+
+## Import Scripts
+
+```bash
+# Employees
+node scripts/erawan/importEmployees.js
+
+# Employee trainings
+node scripts/erawan/importEmployeeTrainings.js
+
+# Training matrix (PositionRequirement)
+node scripts/erawan/importMatrix.js
+```
+
+---
+
+## Development Status
+
+| Module | Status |
+|--------|--------|
+| Authentication (JWT) | ✅ Done |
+| RBAC | ✅ Done |
+| Multi-company isolation | ✅ Done |
+| Workforce import pipeline | ✅ Done |
+| Training system | ✅ Done |
+| Medical system | ✅ Done |
+| Dynamic sidebar | 🔄 In progress |
+| Dashboard system | 🔄 In progress |
+| Deployment workflow | 🔄 In progress |
+| Notification system | ⏳ Planned |
+
+---
+
+## Planned Features
+
+- Email reminders for training expiry
+- Offshore deployment planner
+- Workforce analytics dashboard
+- Docker + cloud deployment
+- Mobile responsive optimization
