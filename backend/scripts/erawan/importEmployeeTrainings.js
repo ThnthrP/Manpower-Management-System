@@ -14,7 +14,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const FILE_PATH = path.join(
   __dirname,
-  "../../../training_record_from_hr/Employee Training Offshore-Erawan 31-3-2026.xlsx",
+  "../../../training_record_from_hr/clean/Employee Training Offshore-Erawan 31-3-2026-CLEAN.xlsx",
 );
 
 // const TRAINING_MAPPING_FILE = path.join(
@@ -42,6 +42,9 @@ const COL = {
   MEDICAL_EXP: 8,
   MEDICAL_OK: 9,
   MEDICAL_CONFINED_SPACE: 10,
+
+  COVID_VACCINE: 12, // M
+  PDPA_CONSENT: 13, // N
 
   TRAINING_START: 14, // O
   TRAINING_END: 69, // BR
@@ -432,6 +435,8 @@ async function importEmployeeTrainings() {
 
   let skipped = 0;
 
+  const skippedEmployees = [];
+
   for (
     let rowIndex = ROW.EMPLOYEE_START;
     rowIndex <= ROW.EMPLOYEE_END;
@@ -444,24 +449,77 @@ async function importEmployeeTrainings() {
         continue;
       }
 
-      const fullName = row[COL.FULL_NAME_TH]?.trim();
+      // const fullName = row[COL.FULL_NAME_TH]?.trim();
+      const fullNameEN = cleanText(row[COL.FULL_NAME_EN]);
+
+      const fullNameTH = cleanText(row[COL.FULL_NAME_TH]);
 
       const employee = await prisma.employee.findFirst({
         where: {
-          fullName,
           companyId: company.id,
+
+          OR: [
+            fullNameTH
+              ? {
+                  fullNameTH,
+                }
+              : undefined,
+
+            fullNameEN
+              ? {
+                  fullNameEN,
+                }
+              : undefined,
+          ].filter(Boolean),
         },
       });
 
+      // if (!employee) {
+      //   console.log(`⚠ Employee not found: ${fullName}`);
+
+      //   skipped++;
+
+      //   continue;
+      // }
+
       if (!employee) {
-        console.log(`⚠ Employee not found: ${fullName}`);
+        skippedEmployees.push({
+          // fullName,
+          fullName: fullNameTH || fullNameEN,
+
+          row: rowIndex + 1,
+
+          position: cleanText(row[COL.POSITION]),
+        });
 
         skipped++;
 
         continue;
       }
 
-      console.log(`\n👤 ${fullName}`);
+      // console.log(`\n👤 ${fullName}`);
+      console.log(`\n👤 ${fullNameTH || fullNameEN}`);
+
+      // ======================================================
+      // Employee Info
+      // ======================================================
+
+      const covidVac = cleanText(row[COL.COVID_VACCINE]);
+
+      const pdpaConsent =
+        cleanText(row[COL.PDPA_CONSENT])?.toUpperCase() || null;
+
+      await prisma.employee.update({
+        where: {
+          id: employee.id,
+        },
+
+        data: {
+          covidVac,
+
+          pdpaConsent,
+        },
+      });
 
       // ======================================================
       // Medical Check
@@ -800,6 +858,14 @@ async function importEmployeeTrainings() {
   console.log("✅ Import Completed");
 
   console.log(`✔ Inserted: ${inserted}`);
+
+  if (skippedEmployees.length > 0) {
+    console.log("\n⚠ Skipped Employees:");
+
+    for (const item of skippedEmployees) {
+      console.log(`- ${item.fullName} | ${item.position} | row ${item.row}`);
+    }
+  }
 
   console.log(`⚠ Skipped: ${skipped}`);
 }

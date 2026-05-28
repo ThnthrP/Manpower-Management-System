@@ -14,13 +14,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const FILE_PATH = path.join(
   __dirname,
-  "../../../training_record_from_hr/Employee Training Offshore-Chevron 31-3-2026.xlsx",
+  "../../../training_record_from_hr/clean/Employee Training Offshore-Chevron 31-3-2026-CLEAN.xlsx",
 );
 
-const TRAINING_MAPPING_FILE = path.join(
-  __dirname,
-  "../../../training_record_from_hr/importChevron-Emp.xlsx",
-);
+// const TRAINING_MAPPING_FILE = path.join(
+//   __dirname,
+//   "../../../training_record_from_hr/importChevron-Emp.xlsx",
+// );
 
 const SHEET_NAME = "Chevron Matrix 2025(14-11-25)";
 
@@ -88,39 +88,39 @@ function normalizePosition(positionName) {
 // Training Mapping
 // =========================================================
 
-function buildTrainingMap(sheet) {
-  const map = new Map();
+// function buildTrainingMap(sheet) {
+//   const map = new Map();
 
-  for (let row = 2; row <= 500; row++) {
-    const globalTrainingRaw = sheet[`A${row}`]?.v;
+//   for (let row = 2; row <= 500; row++) {
+//     const globalTrainingRaw = sheet[`A${row}`]?.v;
 
-    const excelTrainingRaw = sheet[`B${row}`]?.v;
+//     const excelTrainingRaw = sheet[`B${row}`]?.v;
 
-    const globalTraining = cleanText(globalTrainingRaw);
+//     const globalTraining = cleanText(globalTrainingRaw);
 
-    const excelTraining = cleanText(excelTrainingRaw);
+//     const excelTraining = cleanText(excelTrainingRaw);
 
-    if (!globalTraining || !excelTraining) {
-      continue;
-    }
+//     if (!globalTraining || !excelTraining) {
+//       continue;
+//     }
 
-    map.set(excelTraining, globalTraining);
-  }
+//     map.set(excelTraining, globalTraining);
+//   }
 
-  return map;
-}
+//   return map;
+// }
 
 // =========================================================
 // Training Normalize
 // =========================================================
 
-function normalizeTraining(trainingName, trainingMap) {
-  if (!trainingName) return null;
+// function normalizeTraining(trainingName, trainingMap) {
+//   if (!trainingName) return null;
 
-  const cleanedName = cleanText(trainingName);
+//   const cleanedName = cleanText(trainingName);
 
-  return trainingMap.get(cleanedName) || cleanedName;
-}
+//   return trainingMap.get(cleanedName) || cleanedName;
+// }
 
 // =========================================================
 // Create Position Requirement
@@ -128,7 +128,7 @@ function normalizeTraining(trainingName, trainingMap) {
 
 async function createPositionRequirement(
   positionName,
-  trainingName,
+  clientTraining,
   requirementType,
 ) {
   // =======================================================
@@ -163,30 +163,30 @@ async function createPositionRequirement(
   // Global Training
   // =======================================================
 
-  const globalTraining = await prisma.globalTraining.findFirst({
-    where: {
-      name: trainingName,
-    },
-  });
+  //   const globalTraining = await prisma.globalTraining.findFirst({
+  //     where: {
+  //       name: trainingName,
+  //     },
+  //   });
 
-  if (!globalTraining) {
-    throw new Error(`Global training not found: ${trainingName}`);
-  }
+  //   if (!globalTraining) {
+  //     throw new Error(`Global training not found: ${trainingName}`);
+  //   }
 
   // =======================================================
   // Client Training
   // =======================================================
 
-  const clientTraining = await prisma.clientTraining.findFirst({
-    where: {
-      globalTrainingId: globalTraining.id,
-      contractId: contract.id,
-    },
-  });
+  //   const clientTraining = await prisma.clientTraining.findFirst({
+  //     where: {
+  //       globalTrainingId: globalTraining.id,
+  //       contractId: contract.id,
+  //     },
+  //   });
 
-  if (!clientTraining) {
-    throw new Error(`Client training not found: ${trainingName}`);
-  }
+  //   if (!clientTraining) {
+  //     throw new Error(`Client training not found: ${trainingName}`);
+  //   }
 
   // =======================================================
   // Upsert
@@ -196,7 +196,9 @@ async function createPositionRequirement(
     where: {
       positionId_clientTrainingId_contractId: {
         positionId: position.id,
+
         clientTrainingId: clientTraining.id,
+
         contractId: contract.id,
       },
     },
@@ -207,13 +209,18 @@ async function createPositionRequirement(
 
     create: {
       positionId: position.id,
+
       clientTrainingId: clientTraining.id,
+
       contractId: contract.id,
+
       requirementType,
     },
   });
 
-  console.log(`✔ ${positionName} -> ${trainingName} (${requirementType})`);
+  console.log(
+    `✔ ${positionName} -> ${clientTraining.globalTraining.name} (${requirementType})`,
+  );
 }
 
 // =========================================================
@@ -239,18 +246,28 @@ async function importMatrix() {
   // Training Mapping Workbook
   // =======================================================
 
-  const mappingWorkbook = xlsx.readFile(TRAINING_MAPPING_FILE);
+  //   const mappingWorkbook = xlsx.readFile(TRAINING_MAPPING_FILE);
 
-  const mappingSheet = mappingWorkbook.Sheets[mappingWorkbook.SheetNames[0]];
+  //   const mappingSheet = mappingWorkbook.Sheets[mappingWorkbook.SheetNames[0]];
 
-  const TRAINING_NAME_MAP = buildTrainingMap(mappingSheet);
+  //   const TRAINING_NAME_MAP = buildTrainingMap(mappingSheet);
 
-  console.log(`📚 Training mappings loaded: ${TRAINING_NAME_MAP.size}`);
+  //   console.log(`📚 Training mappings loaded: ${TRAINING_NAME_MAP.size}`);
 
   // =======================================================
   // Training Columns
   // D -> AZ
   // =======================================================
+
+  const contract = await prisma.contract.findFirst({
+    where: {
+      contractNo: CONTRACT_CODE,
+    },
+  });
+
+  if (!contract) {
+    throw new Error(`Contract not found: ${CONTRACT_CODE}`);
+  }
 
   const TRAINING_COLUMNS = [];
 
@@ -259,15 +276,47 @@ async function importMatrix() {
 
     const trainingNameRaw = sheet[`${columnLetter}10`]?.v;
 
-    const trainingName = normalizeTraining(trainingNameRaw, TRAINING_NAME_MAP);
+    // const trainingName = normalizeTraining(trainingNameRaw, TRAINING_NAME_MAP);
 
-    if (!trainingName) {
+    const cleanedTrainingName = cleanText(trainingNameRaw);
+
+    if (!cleanedTrainingName) {
       continue;
     }
 
+    const clientTraining = await prisma.clientTraining.findFirst({
+      where: {
+        contractId: contract.id,
+
+        name: cleanedTrainingName,
+      },
+
+      include: {
+        globalTraining: true,
+      },
+    });
+
+    if (!clientTraining) {
+      console.log(`⚠ No mapping: "${cleanedTrainingName}"`);
+
+      continue;
+    }
+
+    // if (!trainingName) {
+    //   continue;
+    // }
+
+    // TRAINING_COLUMNS.push({
+    //   columnLetter,
+    //   trainingName,
+    // });
+
     TRAINING_COLUMNS.push({
       columnLetter,
-      trainingName,
+
+      clientTraining,
+
+      globalTraining: clientTraining.globalTraining,
     });
   }
 
@@ -318,12 +367,16 @@ async function importMatrix() {
 
           await createPositionRequirement(
             positionName,
-            training.trainingName,
+            // training.trainingName,
+            training.clientTraining,
             mappedRequirementType,
           );
         } catch (err) {
+          //   console.error(
+          //     `❌ ${positionName} -> ${training.trainingName}: ${err.message}`,
+          //   );
           console.error(
-            `❌ ${positionName} -> ${training.trainingName}: ${err.message}`,
+            `❌ ${positionName} -> ${training.globalTraining.name}: ${err.message}`,
           );
         }
       }

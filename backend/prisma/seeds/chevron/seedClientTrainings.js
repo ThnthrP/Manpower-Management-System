@@ -1,215 +1,187 @@
+import xlsx from "xlsx";
+import path from "path";
+import { fileURLToPath } from "url";
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function createClientTraining(
-  contractCode,
-  trainingName,
-  completionPeriodCode = null,
-  nameAlias = null,
-) {
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// const FILE_PATH = path.join(
+//   __dirname,
+//   "../../../training_record_from_hr/importErawan.xlsx",
+// );
+
+const FILE_PATH = path.join(
+  __dirname,
+  "../../../../training_record_from_hr/importChevron.xlsx",
+);
+
+async function seedClientTrainings() {
+  console.log("🚀 Seeding Client Trainings...");
+
+  const CONTRACT_CODE = "CHV-2025";
+
   // ======================================================
   // Contract
   // ======================================================
 
   const contract = await prisma.contract.findFirst({
     where: {
-      contractNo: contractCode,
+      contractNo: CONTRACT_CODE,
     },
   });
 
   if (!contract) {
-    throw new Error(`❌ Contract not found: ${contractCode}`);
+    throw new Error(`Contract not found: ${CONTRACT_CODE}`);
   }
 
   // ======================================================
-  // Global Training
+  // Read Excel
   // ======================================================
 
-  const globalTraining = await prisma.globalTraining.findFirst({
-    where: {
-      name: trainingName,
-    },
+  const workbook = xlsx.readFile(FILE_PATH);
+
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+  const rows = xlsx.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: "",
   });
 
-  if (!globalTraining) {
-    throw new Error(`❌ Global training not found: ${trainingName}`);
-  }
-
   // ======================================================
-  // Training Standard
+  // Skip Header
   // ======================================================
 
-  const trainingStandard = await prisma.trainingStandard.findFirst({
-    where: {
-      globalTrainingId: globalTraining.id,
-    },
-  });
+  const dataRows = rows.slice(1);
 
-  if (!trainingStandard) {
-    throw new Error(`❌ Training standard not found: ${trainingName}`);
-  }
+  let inserted = 0;
+  let skipped = 0;
 
   // ======================================================
-  // Upsert
+  // Loop
   // ======================================================
 
-  await prisma.clientTraining.upsert({
-    where: {
-      globalTrainingId_contractId: {
-        globalTrainingId: globalTraining.id,
-        contractId: contract.id,
-      },
-    },
-
-    update: {
-      completionPeriodCode,
-      nameAlias,
-      trainingStandardId: trainingStandard.id,
-    },
-
-    create: {
-      globalTrainingId: globalTraining.id,
-      contractId: contract.id,
-
-      completionPeriodCode,
-      nameAlias,
-
-      trainingStandardId: trainingStandard.id,
-    },
-  });
-
-  console.log(`✔ ${trainingName}`);
-}
-
-async function seedChevronClientTrainings() {
-  console.log("🚀 Seeding Chevron Client Trainings...");
-
-  const CONTRACT_CODE = "CHV-2025";
-
-  const TRAININGS = [
-    // ======================================================
-    // Chevron
-    // ======================================================
-
-    ["Occupational Safety Officer at Supervisory Level"],
-    
-    ["Occupational Safety Officer at Professional Level"],
-
-    ["Fitting"],
-
-    ["Painting & Blasting (International/Dimet/Jotun) / Sand Blasting"],
-
-    ["Welding"],
-
-    ["Operator Knowledge (C1 level)"],
-
-    ["Basic IE (Pneumatic)"],
-
-    ["Basic Mech (Fitting)"],
-
-    ["Mech for Maintenance"],
-
-    ["IE for Maintenance"],
-
-    ["IE - Swaglog"],
-
-    ["MS Office"],
-
-    ["Electrical Certification by Laws"],
-
-    ["Basic Rigging (include crane signal and slinging techniques)"],
-
-    ["Basic Scaffolding"],
-
-    ["Scaffolding Inspector"],
-
-    ["Basic Crane Operator (Comply with API RP2D or equivalent)"],
-
-    ["T-BOSIET"],
-
-    ["Helideck Crew Member (HCM)"],
-
-    ["Fire Watch"],
-
-    ["Rope Access Lead"],
-
-    ["Rope Access"],
-
-    ["Insulation"],
-
-    ["Marine Support"],
-
-    [
-      "Working At Height - Combined Course & Rescue (Use Fall Protection System)",
-    ],
-
-    ["Confined Space Entry (by laws)"],
-
-    ["Qualified Gas Tester (QGT)"],
-
-    ["Crane Operator License (Class A, B+, B, C)"],
-
-    ["PLE & CCU Inspection & Certification"],
-
-    ["Advanced First Aid Training"],
-
-    ["Emergency Response Team (ERT)"],
-
-    ["JDE / Ariba / FECON"],
-
-    ["HAZMAT"],
-
-    ["IHE Coordinator"],
-
-    ["Dangerous Goods"],
-
-    ["MSW Process Overview"],
-
-    ["Bypassing Critical Protection (BCP)"],
-
-    ["Confined Space Entry Standard"],
-
-    ["Electrical Standard"],
-
-    ["Hazard Analysis Procedure"],
-
-    ["Hot Work Standard"],
-
-    ["Isolation of Hazardous Energy (IHE)"],
-
-    ["Lifting and Rigging Standard"],
-
-    ["Permit to Work Procedure"],
-
-    ["Working At Height Standard"],
-
-    ["Stop Work Authority Application"],
-
-    ["SIMOPs"],
-
-    ["HazCom"],
-
-    ["Safety Orientation - Incident Reporting, BBS, HazOb, SWC"],
-  ];
-
-  for (const [trainingName, completionPeriodCode, nameAlias] of TRAININGS) {
+  for (let rowIndex = 0; rowIndex < dataRows.length; rowIndex++) {
     try {
-      await createClientTraining(
-        CONTRACT_CODE,
-        trainingName,
-        completionPeriodCode,
-        nameAlias,
-      );
+      const row = dataRows[rowIndex];
+
+      // ==================================================
+      // Excel Columns
+      // A = GlobalTraining
+      // B = ClientTraining
+      // ==================================================
+
+      // const globalName = String(row[0] || "").trim();
+      const globalName = String(row[0] || "")
+        .replace(/\r?\n|\r/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // const clientName = String(row[1] || "").trim();
+      const clientName = String(row[1] || "")
+        .replace(/\r?\n|\r/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      // ==================================================
+      // Empty Row
+      // ==================================================
+
+      if (!globalName || !clientName) {
+        skipped++;
+
+        continue;
+      }
+
+      // ==================================================
+      // Global Training
+      // ==================================================
+
+      const globalTraining = await prisma.globalTraining.findFirst({
+        where: {
+          name: globalName,
+        },
+      });
+
+      if (!globalTraining) {
+        console.log(`⚠ Global training not found: ${globalName}`);
+
+        skipped++;
+
+        continue;
+      }
+
+      // ==================================================
+      // Training Standard
+      // ==================================================
+
+      const trainingStandard = await prisma.trainingStandard.findFirst({
+        where: {
+          globalTrainingId: globalTraining.id,
+        },
+      });
+
+      if (!trainingStandard) {
+        console.log(`⚠ Training standard not found: ${globalName}`);
+
+        skipped++;
+
+        continue;
+      }
+
+      // ==================================================
+      // Upsert Client Training
+      // ==================================================
+
+      await prisma.clientTraining.upsert({
+        where: {
+          contractId_name: {
+            contractId: contract.id,
+
+            name: clientName,
+          },
+        },
+
+        update: {
+          globalTrainingId: globalTraining.id,
+
+          trainingStandardId: trainingStandard.id,
+        },
+
+        create: {
+          contractId: contract.id,
+
+          name: clientName,
+
+          globalTrainingId: globalTraining.id,
+
+          trainingStandardId: trainingStandard.id,
+        },
+      });
+
+      inserted++;
+
+      console.log(`✔ ${clientName} -> ${globalName}`);
     } catch (err) {
-      console.error(`❌ ${trainingName}: ${err.message}`);
+      skipped++;
+
+      console.error(`❌ Row ${rowIndex + 2}: ${err.message}`);
     }
   }
 
-  console.log("✅ Done seeding Chevron Client Trainings");
+  // ======================================================
+  // Summary
+  // ======================================================
+
+  console.log("\n================================");
+  console.log("✅ Client Training Seed Completed");
+  console.log(`✔ Inserted: ${inserted}`);
+  console.log(`⚠ Skipped: ${skipped}`);
 }
 
-seedChevronClientTrainings()
+seedClientTrainings()
   .catch((err) => {
     console.error("💥 Seed failed:", err);
   })

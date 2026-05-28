@@ -1,163 +1,194 @@
+import xlsx from "xlsx";
+import path from "path";
+import { fileURLToPath } from "url";
+
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-async function createClientTraining(
-  contractCode,
-  trainingName,
-  completionPeriodCode = null,
-  nameAlias = null,
-) {
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const FILE_PATH = path.join(
+  __dirname,
+  "../../../../training_record_from_hr/importPTT.xlsx",
+);
+
+// =========================================================
+// Helpers
+// =========================================================
+
+function cleanText(value) {
+  if (!value) return "";
+
+  return String(value)
+    .replace(/\r?\n|\r/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// =========================================================
+// Main
+// =========================================================
+
+async function seedClientTrainings() {
+  console.log("🚀 Seeding PTT Client Trainings...");
+
+  const CONTRACT_CODE = "PTT-2025";
+
   // ======================================================
   // Contract
   // ======================================================
 
   const contract = await prisma.contract.findFirst({
     where: {
-      contractNo: contractCode,
+      contractNo: CONTRACT_CODE,
     },
   });
 
   if (!contract) {
-    throw new Error(`❌ Contract not found: ${contractCode}`);
+    throw new Error(`Contract not found: ${CONTRACT_CODE}`);
   }
 
   // ======================================================
-  // Global Training
+  // Read Excel
   // ======================================================
 
-  const globalTraining = await prisma.globalTraining.findFirst({
-    where: {
-      name: trainingName,
-    },
+  const workbook = xlsx.readFile(FILE_PATH);
+
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+  const rows = xlsx.utils.sheet_to_json(sheet, {
+    header: 1,
+    defval: "",
   });
 
-  if (!globalTraining) {
-    throw new Error(`❌ Global training not found: ${trainingName}`);
-  }
-
   // ======================================================
-  // Training Standard
+  // Skip Header
   // ======================================================
 
-  const trainingStandard = await prisma.trainingStandard.findFirst({
-    where: {
-      globalTrainingId: globalTraining.id,
-    },
-  });
+  const dataRows = rows.slice(1);
 
-  if (!trainingStandard) {
-    throw new Error(`❌ Training standard not found: ${trainingName}`);
-  }
+  let inserted = 0;
+  let skipped = 0;
 
   // ======================================================
-  // Upsert
+  // Loop
   // ======================================================
 
-  await prisma.clientTraining.upsert({
-    where: {
-      globalTrainingId_contractId: {
-        globalTrainingId: globalTraining.id,
-        contractId: contract.id,
-      },
-    },
-
-    update: {
-      completionPeriodCode,
-      nameAlias,
-      trainingStandardId: trainingStandard.id,
-    },
-
-    create: {
-      globalTrainingId: globalTraining.id,
-      contractId: contract.id,
-
-      completionPeriodCode,
-      nameAlias,
-
-      trainingStandardId: trainingStandard.id,
-    },
-  });
-
-  console.log(`✔ ${trainingName}`);
-}
-
-async function seedPTTClientTrainings() {
-  console.log("🚀 Seeding PTT Client Trainings...");
-
-  const CONTRACT_CODE = "PTT-2025";
-
-  const TRAININGS = [
-    // ======================================================
-    // PTT
-    // ======================================================
-
-    ["HR Orientation"],
-
-    ["Job Description"],
-
-    ["Basic Safety Training"],
-
-    ["Offshore Sea Survival Skills & Emegency / HUET"],
-
-    ["New offshore"],
-
-    ["Refresh Offshore"],
-
-    ["Safety Awareness at PTT"],
-
-    ["Lifting Supervisor"],
-
-    ["Working at Height and Rescue"],
-
-    ["Building Electrical Installation"],
-
-    ["Fitter Training"],
-
-    ["Hydraulic Tool Basics and Safety"],
-
-    ["N-vision Pressure Calibrator Operation Training and Hydro test system"],
-
-    ["Machine and Tool Safety"],
-
-    ["Permit to work System (PTW) for ERP-PRP"],
-
-    ["Harzop CARD System (HOC) ERP & PRP"],
-
-    ["Occupational Safety Officer at Supervisory Level"],
-
-    ["Occupational Safety Officer at Professional Level"],
-
-    ["Painting & Blasting (International/Dimet/Jotun) / Sand Blasting"],
-
-    ["Welding"],
-
-    ["Basic Scaffolding"],
-
-    ["Scaffolding Inspector"],
-
-    ["Crane Operator License (Class A, B+, B, C)"],
-
-    ["Rigging, Slinging & Banksman"],
-  ];
-
-  for (const [trainingName, completionPeriodCode, nameAlias] of TRAININGS) {
+  for (let rowIndex = 0; rowIndex < dataRows.length; rowIndex++) {
     try {
-      await createClientTraining(
-        CONTRACT_CODE,
-        trainingName,
-        completionPeriodCode,
-        nameAlias,
-      );
+      const row = dataRows[rowIndex];
+
+      // ==================================================
+      // Excel Columns
+      // A = GlobalTraining
+      // B = ClientTraining
+      // ==================================================
+
+      const globalName = cleanText(row[0]);
+
+      const clientName = cleanText(row[1]);
+
+      // ==================================================
+      // Empty Row
+      // ==================================================
+
+      if (!globalName || !clientName) {
+        skipped++;
+
+        continue;
+      }
+
+      // ==================================================
+      // Global Training
+      // ==================================================
+
+      const globalTraining = await prisma.globalTraining.findFirst({
+        where: {
+          name: globalName,
+        },
+      });
+
+      if (!globalTraining) {
+        console.log(`⚠ Global training not found: ${globalName}`);
+
+        skipped++;
+
+        continue;
+      }
+
+      // ==================================================
+      // Training Standard
+      // ==================================================
+
+      const trainingStandard = await prisma.trainingStandard.findFirst({
+        where: {
+          globalTrainingId: globalTraining.id,
+        },
+      });
+
+      if (!trainingStandard) {
+        console.log(`⚠ Training standard not found: ${globalName}`);
+
+        skipped++;
+
+        continue;
+      }
+
+      // ==================================================
+      // Upsert Client Training
+      // ==================================================
+
+      await prisma.clientTraining.upsert({
+        where: {
+          contractId_name: {
+            contractId: contract.id,
+
+            name: clientName,
+          },
+        },
+
+        update: {
+          globalTrainingId: globalTraining.id,
+
+          trainingStandardId: trainingStandard.id,
+        },
+
+        create: {
+          contractId: contract.id,
+
+          name: clientName,
+
+          globalTrainingId: globalTraining.id,
+
+          trainingStandardId: trainingStandard.id,
+        },
+      });
+
+      inserted++;
+
+      console.log(`✔ ${clientName} -> ${globalName}`);
     } catch (err) {
-      console.error(`❌ ${trainingName}: ${err.message}`);
+      skipped++;
+
+      console.error(`❌ Row ${rowIndex + 2}: ${err.message}`);
     }
   }
 
-  console.log("✅ Done seeding PTT Client Trainings");
+  // ======================================================
+  // Summary
+  // ======================================================
+
+  console.log("\n================================");
+
+  console.log("✅ PTT Client Training Seed Completed");
+
+  console.log(`✔ Inserted: ${inserted}`);
+
+  console.log(`⚠ Skipped: ${skipped}`);
 }
 
-seedPTTClientTrainings()
+seedClientTrainings()
   .catch((err) => {
     console.error("💥 Seed failed:", err);
   })

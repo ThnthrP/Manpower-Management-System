@@ -13,10 +13,28 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const FILE_PATH = path.join(
   __dirname,
-  "../../../training_record_from_hr/Employee Training Offshore-Chevron 31-3-2026.xlsx",
+  "../../../training_record_from_hr/clean/Employee Training Offshore-Chevron 31-3-2026-CLEAN.xlsx",
 );
 
 const SHEET_NAME = "Record";
+
+const POSITION_MAPPINGS = {
+  "Rigger/Scaffolder": "Rigger / Scaffolder",
+
+  "CPP Crane Assistant / Rigger/Scaffolder":
+    "CPP Crane Assistant / Rigger / Scaffolder",
+
+  "Construction Utility Foreman (Painter/Scaffolder)":
+    "Construction Utility Foreman (Painter / Scaffolder)",
+
+  "Rigger/Scaffolder + Rope Access Lead level":
+    "Rigger / Scaffolder + Rope Access Lead Level",
+
+  "Rigger/Scaffolder + Rope Access Technician level":
+    "Rigger / Scaffolder + Rope Access Technician Level",
+
+  "Rigger/Scaffolder (Skill Mechanic)": "Rigger / Scaffolder (Skill Mechanic)",
+};
 
 // =========================================================
 // Helpers
@@ -37,49 +55,25 @@ function normalizeName(name) {
 function normalizePosition(positionName) {
   if (!positionName) return null;
 
-  let name = cleanText(positionName);
+  const name = cleanText(positionName);
 
-  // =======================================================
-  // Normalize spacing
-  // =======================================================
-
-  if (name === "Rigger/Scaffolder") {
-    return "Rigger / Scaffolder";
-  }
-
-  if (name === "CPP Crane Assistant / Rigger/Scaffolder") {
-    return "CPP Crane Assistant / Rigger / Scaffolder";
-  }
-
-  if (name === "Construction Utility Foreman (Painter/Scaffolder)") {
-    return "Construction Utility Foreman (Painter / Scaffolder)";
-  }
-
-  if (name === "Rigger/Scaffolder + Rope Access Lead level") {
-    return "Rigger / Scaffolder + Rope Access Lead Level";
-  }
-
-  if (name === "Rigger/Scaffolder + Rope Access Technician level") {
-    return "Rigger / Scaffolder + Rope Access Technician Level";
-  }
-
-  if (name === "Rigger/Scaffolder (Skill Mechanic)") {
-    return "Rigger / Scaffolder (Skill Mechanic)";
-  }
-
-  return name;
+  return POSITION_MAPPINGS[name] || name;
 }
 
-function isEmployeeRow(fullNameEN, positionName) {
-  if (!fullNameEN || !positionName) {
+// function isEmployeeRow(fullNameEN, positionName) {
+function isEmployeeRow(fullNameTH, positionName) {
+  //   if (!fullNameEN || !positionName) {
+  if (!fullNameTH || !positionName) {
     return false;
   }
 
-  if (typeof fullNameEN !== "string") {
+  //   if (typeof fullNameEN !== "string") {
+  if (typeof fullNameTH !== "string") {
     return false;
   }
 
-  const name = fullNameEN.trim();
+  //   const name = fullNameEN.trim();
+  const name = fullNameTH.trim();
 
   if (!name) {
     return false;
@@ -137,17 +131,26 @@ async function createEmployee({
     },
 
     update: {
-      fullName: fullNameEN,
+      fullName: fullNameTH,
+
       fullNameTH,
+      fullNameEN,
+
       companyId: company.id,
+
       positionId: position.id,
     },
 
     create: {
       empCode: employeeCode,
-      fullName: fullNameEN,
+
+      fullName: fullNameTH,
+
       fullNameTH,
+      fullNameEN,
+
       companyId: company.id,
+
       positionId: position.id,
     },
   });
@@ -208,7 +211,8 @@ async function importEmployees() {
       // Skip invalid rows
       // ===================================================
 
-      if (!isEmployeeRow(fullNameEN, positionName)) {
+      //   if (!isEmployeeRow(fullNameEN, positionName)) {
+      if (!isEmployeeRow(fullNameTH, positionName)) {
         continue;
       }
 

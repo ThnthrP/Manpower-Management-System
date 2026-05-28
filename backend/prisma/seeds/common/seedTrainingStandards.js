@@ -386,6 +386,28 @@ async function main() {
     ],
     ["Harzop CARD System (HOC) ERP & PRP", null, 1 * DAY_HOURS, null, true],
 
+    // PTT - add from record
+
+    [
+      "Occupational Safety Officer at Management Level",
+      "CONTRACTOR",
+      null,
+      null,
+      true,
+    ],
+
+    [
+      "Occupational Safety Officer at Technical Level",
+      "CONTRACTOR",
+      null,
+      null,
+      true,
+    ],
+
+    ["Coating Inspector", "CONTRACTOR", null, null, true],
+
+    ["Welding Qualification Test", "CONTRACTOR", null, null, true],
+
     // ======================================================
     // Valeura
     // ======================================================
@@ -393,6 +415,17 @@ async function main() {
     ["Safety Awareness at Mubadala", "COMPANY_ELEARNING", 2, null, true],
     ["Fire watcher Awareness", "COMPANY_ELEARNING", 4, null, true],
     ["HSSE requirement for contractor", "COMPANY_ELEARNING", null, null, true],
+
+    // add from Chevron
+
+    ["Basic Rigging (by Settapat)", null, null, 4 * YEAR, false],
+    ["Helicopter Fire Fighting", null, null, 3 * YEAR, false],
+    ["R550 Device Operation", null, null, 3 * YEAR, false],
+    ["Control of Work Training (CoW)", null, null, 3 * YEAR, false],
+
+    // add from Valeura
+    ["Fire Watch Awareness", null, null, 3 * YEAR, false],
+    ["HSSE Requirements for Contractors", null, null, null, true],
   ];
 
   for (const [name, source, trainingHours, validityDays, isNoExpiry] of DATA) {

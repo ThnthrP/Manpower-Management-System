@@ -279,23 +279,59 @@ model Position {
 model Employee {
   id         String  @id @default(uuid())
   empCode    String  @unique
+
   fullName   String
   fullNameTH String?
+  fullNameEN String?
 
   status     String  @default("active")
-  division   String? // "Scaffold&Paint", "Mechanical"
+
+  // =====================================================
+  // Organization
+  // =====================================================
+
+  division String? // "Scaffold&Paint", "Mechanical"
+
+  // =====================================================
+  // Experience
+  // =====================================================
+
+  startWorkDate DateTime?
+
   isOffshore Boolean @default(false)
 
+  // =====================================================
+  // Position
+  // =====================================================
+
   positionId String?
-  position   Position? @relation("PrimaryPosition", fields: [positionId], references: [id])
+
+  position Position? @relation("PrimaryPosition", fields: [positionId], references: [id])
+
+  // =====================================================
+  // Company
+  // =====================================================
 
   companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
+
+  company Company? @relation(fields: [companyId], references: [id])
+
+  // =====================================================
+  // User
+  // =====================================================
 
   user User?
 
+  // =====================================================
+  // Extra
+  // =====================================================
+
   covidVac    String?
-  pdpaConsent Boolean?
+  pdpaConsent String?
+
+  // =====================================================
+  // Relations
+  // =====================================================
 
   trainings     EmployeeTraining[]
   medicalChecks MedicalCheck[]
@@ -305,7 +341,12 @@ model Employee {
   candidates         Candidate[]
   assignments        Assignment[]
   bookings           Booking[]
-  subcontractorHires SubcontractorHire[] // Fix 2
+
+  subcontractorHires SubcontractorHire[]
+
+  // =====================================================
+  // Timestamp
+  // =====================================================
 
   createdAt DateTime @default(now())
 }
@@ -463,6 +504,8 @@ model EmployeeTraining {
   source String?
   sourceFile String?
 
+  institute String?
+
   version Int @default(1)
   isLatest Boolean @default(true)
 
@@ -477,6 +520,7 @@ model EmployeeTraining {
 
   @@index([employeeId, globalTrainingId, isLatest])
   @@index([expiryDate, isLatest])
+  @@unique([employeeId, globalTrainingId, contractId, version])
 }
 
 // ─────────────────────────────────────────────────────────
@@ -490,6 +534,7 @@ model MedicalCheck {
 
   checkType  String // "Medical Check up" / "Confined Space Entry"
   hospital   String?
+  formType String?
   issuedDate DateTime?
   expiryDate DateTime?
   remindDate DateTime?

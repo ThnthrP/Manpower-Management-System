@@ -53,6 +53,9 @@ async function seedPositions() {
 
     "Painter / Scaffolder",
 
+    // Chevron - add from record (row 83 - 84)
+    "CPP Crane Assistant / Rigger / Scaffolder",
+
     // Chevron - add from matrix
 
     "Welder, Regular",
@@ -197,6 +200,18 @@ async function seedPositions() {
     "Hydrotest & Torque Technician",
 
     "Crane Operator",
+
+    // PTT - add from record
+
+    "Painting Foreman",
+
+    "Painting Supervisor",
+
+    "Construction Supervisor",
+
+    "Engineering Supervisor",
+
+    "QA/QC Inspector",
 
     // ======================================================
     // Valeura

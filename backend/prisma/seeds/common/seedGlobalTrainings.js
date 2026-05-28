@@ -10,9 +10,9 @@ async function seedGlobalTrainings() {
     // Chevron
     // ======================================================
 
-    "Occupational Safety Officer at Supervisory Level",
+    "Occupational Safety Officer at Supervisory Level", // จป.หัวหน้างาน
 
-    "Occupational Safety Officer at Professional Level",
+    "Occupational Safety Officer at Professional Level", // จป.วิชาชีพ
 
     "Fitting",
 
@@ -288,15 +288,25 @@ async function seedGlobalTrainings() {
 
     "Harzop CARD System (HOC) ERP & PRP",
 
+    // PTT - add from record
+
+    "Occupational Safety Officer at Management Level", // จป.บริหาร
+
+    "Occupational Safety Officer at Technical Level", // จป.เทคนิค
+
+    "Coating Inspector",
+
+    "Welding Qualification Test",
+
     // ======================================================
     // Valeura
     // ======================================================
 
     "Safety Awareness at Mubadala",
 
-    "Fire watcher Awareness",
+    "Fire Watch Awareness",
 
-    "HSSE requirement for contractor",
+    "HSSE Requirements for Contractors",
   ];
 
   for (const name of TRAININGS) {
