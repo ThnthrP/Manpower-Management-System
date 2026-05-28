@@ -153,73 +153,307 @@ WorkflowLog records every action
 
 ```
 frontend/
+├── public/
+│
 ├── src/
+│
+│   ├── assets/
+│   │
+│   │   ├── images/
+│   │   ├── icons/
+│   │   └── logos/
+│
 │   ├── components/
+│   │
 │   │   ├── layout/
 │   │   │   ├── Layout.jsx
 │   │   │   ├── Navbar.jsx
 │   │   │   ├── Sidebar.jsx
 │   │   │   └── sidebarMenu.js
-│   │   ├── AdminRoute.jsx
-│   │   └── ProtectedRoute.jsx        ← allowRoles-based guard
+│   │   │
+│   │   ├── guards/
+│   │   │   ├── AdminRoute.jsx
+│   │   │   ├── ProtectedRoute.jsx
+│   │   │   └── RoleRoute.jsx
+│   │   │
+│   │   ├── ui/
+│   │   │   ├── Button.jsx
+│   │   │   ├── Modal.jsx
+│   │   │   ├── Table.jsx
+│   │   │   ├── Loader.jsx
+│   │   │   └── StatusBadge.jsx
+│   │   │
+│   │   └── common/
+│   │       ├── PageHeader.jsx
+│   │       ├── EmptyState.jsx
+│   │       ├── SearchInput.jsx
+│   │       └── ConfirmDialog.jsx
+│
 │   ├── context/
-│   │   └── AppContext.jsx
+│   │   ├── AppContext.jsx
+│   │   ├── AuthContext.jsx
+│   │   └── CompanyContext.jsx
+│
+│   ├── hooks/
+│   │   ├── useAuth.js
+│   │   ├── useCompany.js
+│   │   └── usePermission.js
+│
+│   ├── services/
+│   │   ├── api.js
+│   │   ├── authService.js
+│   │   ├── employeeService.js
+│   │   ├── trainingService.js
+│   │   ├── medicalService.js
+│   │   └── manpowerService.js
+│
+│   ├── utils/
+│   │   ├── formatDate.js
+│   │   ├── calculateExperience.js
+│   │   ├── constants.js
+│   │   └── permissions.js
+│
 │   ├── pages/
-│   │   ├── shared/                   ← shared across all companies
+│   │
+│   │   ├── shared/
 │   │   │   ├── Login.jsx
 │   │   │   ├── CompanySelect.jsx
 │   │   │   ├── Profile.jsx
-│   │   │   └── ResetPassword.jsx
-│   │   ├── ces/
-│   │   │   ├── index.jsx             ← role router (CES)
-│   │   │   └── dashboard/
-│   │   │       ├── AdminDashboard.jsx
-│   │   │       ├── PeDashboard.jsx
-│   │   │       ├── HrDashboard.jsx
-│   │   │       ├── ManpowerDashboard.jsx
-│   │   │       ├── SafetyDashboard.jsx
-│   │   │       ├── NurseDashboard.jsx
-│   │   │       └── TaDashboard.jsx
+│   │   │   ├── ResetPassword.jsx
+│   │   │   ├── Unauthorized.jsx
+│   │   │   └── NotFound.jsx
+│   │   │
 │   │   ├── expert/
-│   │   │   ├── index.jsx             ← role router (EXPERT)
-│   │   │   └── dashboard/
-│   │   │       ├── AdminDashboard.jsx
-│   │   │       ├── PeDashboard.jsx
-│   │   │       ├── ManpowerDashboard.jsx
-│   │   │       ├── HrDashboard.jsx
-│   │   │       ├── SafetyDashboard.jsx
-│   │   │       ├── NurseDashboard.jsx
-│   │   │       └── ExpertDashboard.jsx
-│   │   └── admin/                    ← system-level (all companies)
-│   │       ├── AdminUsers.jsx
-│   │       └── Notifications.jsx
+│   │   │
+│   │   │   ├── index.jsx
+│   │   │   │
+│   │   │   ├── dashboard/
+│   │   │   │   ├── AdminDashboard.jsx
+│   │   │   │   ├── HrDashboard.jsx
+│   │   │   │   ├── PeDashboard.jsx
+│   │   │   │   ├── SafetyDashboard.jsx
+│   │   │   │   ├── NurseDashboard.jsx
+│   │   │   │   ├── ManpowerDashboard.jsx
+│   │   │   │   └── ExpertDashboard.jsx
+│   │   │   │
+│   │   │   ├── employees/
+│   │   │   │   ├── EmployeeList.jsx
+│   │   │   │   ├── EmployeeDetail.jsx
+│   │   │   │   ├── EmployeeProfile.jsx
+│   │   │   │   └── EmployeeTraining.jsx
+│   │   │   │
+│   │   │   ├── trainings/
+│   │   │   │   ├── TrainingMatrixExpert.jsx
+│   │   │   │   ├── TrainingRequirement.jsx
+│   │   │   │   ├── TrainingHistory.jsx
+│   │   │   │   └── TrainingDashboard.jsx
+│   │   │   │
+│   │   │   ├── medical/
+│   │   │   │   ├── MedicalDashboard.jsx
+│   │   │   │   ├── MedicalList.jsx
+│   │   │   │   └── MedicalHistory.jsx
+│   │   │   │
+│   │   │   ├── manpower/
+│   │   │   │   ├── RequestList.jsx
+│   │   │   │   ├── BookingList.jsx
+│   │   │   │   ├── AssignmentList.jsx
+│   │   │   │   └── DeploymentBoard.jsx
+│   │   │   │
+│   │   │   ├── safety/
+│   │   │   │   ├── SafetyDashboard.jsx
+│   │   │   │   ├── SafetyChecks.jsx
+│   │   │   │   └── IncidentReports.jsx
+│   │   │   │
+│   │   │   └── admin/
+│   │   │       ├── AdminUsers.jsx
+│   │   │       ├── Roles.jsx
+│   │   │       ├── Permissions.jsx
+│   │   │       └── Notifications.jsx
+│   │   │
+│   │   ├── ces/
+│   │   │
+│   │   │   ├── index.jsx
+│   │   │   │
+│   │   │   ├── dashboard/
+│   │   │   │   ├── AdminDashboard.jsx
+│   │   │   │   ├── HrDashboard.jsx
+│   │   │   │   ├── PeDashboard.jsx
+│   │   │   │   ├── SafetyDashboard.jsx
+│   │   │   │   ├── NurseDashboard.jsx
+│   │   │   │   ├── ManpowerDashboard.jsx
+│   │   │   │   └── TaDashboard.jsx
+│   │   │   │
+│   │   │   ├── manpower/
+│   │   │   ├── employees/
+│   │   │   ├── trainings/
+│   │   │   ├── medical/
+│   │   │   └── safety/
+│   │   │
+│   │   └── system/
+│   │       ├── Companies.jsx
+│   │       ├── Contracts.jsx
+│   │       ├── Notifications.jsx
+│   │       └── SystemDashboard.jsx
+│
 │   ├── routes/
+│   │
 │   │   ├── shared/
-│   │   │   └── SharedRoutes.jsx      ← /, /login, /profile, /admin/users
-│   │   └── company/
-│   │       ├── CompanyRouter.jsx     ← reads company → CES or EXPERT
-│   │       ├── CesRoutes.jsx         ← CES team owns this file
-│   │       └── ExpertRoutes.jsx      ← EXPERT team owns this file
-│   └── App.jsx                       ← mounts SharedRoutes + CompanyRouter
+│   │   │   └── SharedRoutes.jsx
+│   │   │
+│   │   ├── company/
+│   │   │   ├── CompanyRouter.jsx
+│   │   │   ├── ExpertRoutes.jsx
+│   │   │   └── CesRoutes.jsx
+│   │   │
+│   │   └── index.jsx
+│
+│   ├── styles/
+│   │   ├── index.css
+│   │   └── theme.css
+│
+│   ├── App.jsx
+│   └── main.jsx
+│
+├── .env
+├── .gitignore
+├── package.json
+└── vite.config.js
 
-server/
+backend/
+├── config/
+│   ├── prisma.js
+│   ├── nodemailer.js
+│   ├── emailTemplates.js
+│   ├── jwt.js
+│   └── multer.js
+│
 ├── controllers/
-│   └── authController.js
+│
+│   ├── auth/
+│   │   └── authController.js
+│   │
+│   ├── employee/
+│   │   ├── employeeController.js
+│   │   ├── employeeTrainingController.js
+│   │   └── medicalController.js
+│   │
+│   ├── manpower/
+│   │   ├── requestController.js
+│   │   ├── bookingController.js
+│   │   └── assignmentController.js
+│   │
+│   ├── safety/
+│   │   └── safetyController.js
+│   │
+│   └── admin/
+│       ├── userController.js
+│       ├── roleController.js
+│       └── permissionController.js
+│
+├── middleware/
+│   ├── authorize.js
+│   ├── upload.js
+│   ├── userAuth.js
+│   ├── errorHandler.js
+│   └── validateRequest.js
+│
+├── prisma/
+│
+│   ├── migrations/
+│   │
+│   ├── seeds/
+│   │
+│   │   ├── common/
+│   │   │   ├── seedCompanies.js
+│   │   │   ├── seedClients.js
+│   │   │   ├── seedContracts.js
+│   │   │   ├── seedPositions.js
+│   │   │   ├── seedGlobalTrainings.js
+│   │   │   ├── seedMedicalRequirements.js
+│   │   │   ├── seedTrainingStandards.js
+│   │   │   ├── seedTrainings.js
+│   │   │   └── clearTraining.js
+│   │   │
+│   │   ├── chevron/
+│   │   │   └── seedClientTrainings.js
+│   │   │
+│   │   ├── erawan/
+│   │   │   └── seedClientTrainings.js
+│   │   │
+│   │   ├── ptt/
+│   │   │   └── seedClientTrainings.js
+│   │   │
+│   │   └── valeura/
+│   │       └── seedClientTrainings.js
+│   │
+│   ├── schema.prisma
+│   ├── seed.js
+│   └── trainingMapping.json
+│
 ├── routes/
 │   ├── authRoutes.js
 │   ├── userRoutes.js
-│   ├── safetyRoutes.js
+│   ├── employeeRoutes.js
+│   ├── trainingRoutes.js
 │   ├── medicalRoutes.js
-│   └── requestRoutes.js
-├── middleware/
-│   ├── userAuth.js                   ← verify JWT + load user with permissions
-│   └── authorize.js                  ← RBAC permission check
-├── prisma/
-│   ├── schema.prisma
-│   └── seed.js
-├── config/
-│   ├── prisma.js
-│   └── nodemailer.js
+│   ├── safetyRoutes.js
+│   ├── requestRoutes.js
+│   ├── bookingRoutes.js
+│   └── assignmentRoutes.js
+│
+├── scripts/
+│
+│   ├── common/
+│   │   ├── parseDate.js
+│   │   ├── cleanText.js
+│   │   ├── normalizeName.js
+│   │   ├── normalizePosition.js
+│   │   └── excelHelpers.js
+│   │
+│   ├── chevron/
+│   │   ├── importEmployees.js
+│   │   ├── importEmployeeTrainings.js
+│   │   └── importMatrix.js
+│   │
+│   ├── erawan/
+│   │   ├── importEmployees.js
+│   │   ├── importEmployeeTrainings.js
+│   │   └── importMatrix.js
+│   │
+│   ├── ptt/
+│   │   ├── importEmployees.js
+│   │   ├── importEmployeeTrainings.js
+│   │   └── importMatrix.js
+│   │
+│   ├── valeura/
+│   │   ├── importEmployees.js
+│   │   ├── importEmployeeTrainings.js
+│   │   └── importMatrix.js
+│   │
+│   ├── resetImportData.js
+│   └── debugExcel.js
+│
+├── services/
+│   ├── authService.js
+│   ├── employeeService.js
+│   ├── trainingService.js
+│   ├── medicalService.js
+│   ├── manpowerService.js
+│   └── notificationService.js
+│
+├── utils/
+│   ├── calculateExperience.js
+│   ├── formatDate.js
+│   ├── constants.js
+│   ├── permissions.js
+│   └── trainingStatus.js
+│
+├── uploads/
+│
+├── .env
+├── .gitignore
+├── package.json
+├── package-lock.json
 └── server.js
 ```
 
